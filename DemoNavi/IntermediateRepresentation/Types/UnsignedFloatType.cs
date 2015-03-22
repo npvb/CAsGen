@@ -5,17 +5,11 @@ using System.Text;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class UnsignedIntType : IRType
+    class UnsignedFloatType : IRType
     {
         public override string ToString()
         {
-            return "unsigned int";
+            return "unsigned float";
         }
-
-        public UnsignedIntType()
-        {
-            // TODO: Complete member initialization
-        }
-
     }
 }

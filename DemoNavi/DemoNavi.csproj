@@ -107,6 +107,7 @@
     <Compile Include="IntermediateRepresentation\Statements\DeclarationStatement.cs" />
     <Compile Include="IntermediateRepresentation\Function.cs" />
     <Compile Include="IntermediateRepresentation\Identifier.cs" />
+    <Compile Include="IntermediateRepresentation\Types\EnumType.cs" />
     <Compile Include="IntermediateRepresentation\Types\IntType.cs" />
     <Compile Include="IntermediateRepresentation\Parameter.cs" />
     <Compile Include="IntermediateRepresentation\Types\PointerType.cs" />
@@ -114,6 +115,8 @@
     <Compile Include="IntermediateRepresentation\Statements\ReturnStatement.cs" />
     <Compile Include="IntermediateRepresentation\Statements\Statement.cs" />
     <Compile Include="IntermediateRepresentation\Types\IRType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\StructType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\UnionType.cs" />
     <Compile Include="IntermediateRepresentation\Types\VoidType.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\AddExpression.cs" />
     <Compile Include="IntermediateRepresentation\VarItem.cs" />
@@ -136,6 +139,12 @@
     <Compile Include="IntermediateRepresentation\Expressions\StringLiteral.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\NotEqualExpression.cs" />
     <Compile Include="IntermediateRepresentation\Types\UnsignedIntType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\UnsignedDoubleType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\UnsignedFloatType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\UnsignedLongIntType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\UnsignedLongType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\UnsignedShortIntType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\UnsignedShortType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Recompilers\Basic\BasicRecompiler.cs" />
     <Compile Include="Recompilers\Recompiler.cs" />

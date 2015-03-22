@@ -561,11 +561,16 @@ namespace DemoNavi
 
                 case ProductionIndex.Structdef:
                     // <Struct Def> ::= <Var Decl> <Struct Def>
-                    break;
+                     var declarationstm = r.GetData(0) as DeclarationStatement;
+                     var structdeftail = r.GetData(1) as List<DeclarationStatement>;
+                     structdeftail.Insert(0,declarationstm);
+
+                     return structdeftail;
 
                 case ProductionIndex.Structdef2:
                     // <Struct Def> ::= <Var Decl>
-                    break;
+                    declarationstm = r.GetData(0) as DeclarationStatement;
+                    return new List<DeclarationStatement>() { declarationstm };
 
                 case ProductionIndex.Vardecl_Semi:
                     // <Var Decl> ::= <Mod> <Type> <Var> <Var List> ';'
@@ -756,28 +761,53 @@ namespace DemoNavi
                         {
                             return new UnsignedIntType();
                         }
+                        else if (r.GetData(1) is ShortType)
+                        {
+                            return new UnsignedShortType();
+                        }
+                        else if (r.GetData(1) is LongType)
+                        {
+                            return new UnsignedLongType();
+                        }
+                        else if (r.GetData(1) is ShortIntType)
+                        {
+                            return new UnsignedShortIntType();
+                        }
+                        else if (r.GetData(1) is FloatType)
+                        {
+                            return new UnsignedFloatType();
+                        }
+                        else if (r.GetData(1) is LongIntType)
+                        {
+                            return new UnsignedLongIntType();
+                        }
+                        else if (r.GetData(1) is DoubleType)
+                        {
+                            return new UnsignedDoubleType();
+                        }    
+                           
                     }
                     return r.GetData(1);
 
                 case ProductionIndex.Base_Struct_Id:
                     // <Base> ::= struct Id
-                    break;
+                    return new StructType(r.GetData(1).ToString());
 
                 case ProductionIndex.Base_Struct_Lbrace_Rbrace:
                     // <Base> ::= struct '{' <Struct Def> '}'
-                    break;
+                    return new StructType(r.GetData(2) as List<DeclarationStatement>);
 
                 case ProductionIndex.Base_Union_Id:
                     // <Base> ::= union Id
-                    break;
+                    return new UnionType(r.GetData(1).ToString());
 
                 case ProductionIndex.Base_Union_Lbrace_Rbrace:
                     // <Base> ::= union '{' <Struct Def> '}'
-                    break;
+                    return new UnionType(r.GetData(2) as List<DeclarationStatement>);
 
                 case ProductionIndex.Base_Enum_Id:
                     // <Base> ::= enum Id
-                    break;
+                    return new EnumType(r.GetData(1).ToString());
 
                 case ProductionIndex.Sign_Signed:
                     // <Sign> ::= signed
