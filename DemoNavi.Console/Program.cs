@@ -14,10 +14,15 @@ namespace DemoNavi.ConsoleHost
         {
             var parser = new DemoNavi.MyParser();
             string program = @"int main() {
-                                    
+                                    main();
+                                    main(1);            
+                                    main(1,x,main());
+                                    main(main());
+                                    main(main(),main(),~main());
+
                                      if(n == true)
                                      {
-                                        for(i=0;i<52;i++)
+                                        for(i=0;i<52;i++,j--,h++)
                                         {
                                             while(i<59)
                                             {

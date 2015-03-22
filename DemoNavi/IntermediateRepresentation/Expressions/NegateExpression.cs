@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace DemoNavi.IntermediateRepresentation.Expressions
 {
-    class NotEqualToExpression : UnaryExpression
+    class NegateExpression: UnaryExpression
     {
-        public NotEqualToExpression(Expression expr): base(expr)
+        public NegateExpression(Expression expr): base(expr)
         {
 
         }
         public override string ToString()
         {
-            return "!" + base.Expression;
+            return " '-' ";
         }
     }
 }

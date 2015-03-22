@@ -12,6 +12,7 @@ namespace DemoNavi
     using DemoNavi.IntermediateRepresentation.Types;
     using DemoNavi.IntermediateRepresentation.Statements;
     using DemoNavi.IntermediateRepresentation.Expressions;
+    using DemoNavi.IntermediateRepresentation.Modifiers;
     public class MyParser
     {
         public MyParser()
@@ -568,13 +569,9 @@ namespace DemoNavi
 
                 case ProductionIndex.Vardecl_Semi:
                     // <Var Decl> ::= <Mod> <Type> <Var> <Var List> ';'
-                    break;
-
-                case ProductionIndex.Vardecl_Semi2:
-                    // <Var Decl> ::= <Type> <Var> <Var List> ';'
-                    var baseType = r.GetData(0) as IRType;
-                    var partialDeclaration = r.GetData(1) as PartialIdDeclarationStatement;
-                    var varList = r.GetData(2) as List<VarItem>;
+                    var baseType = r.GetData(1) as IRType;
+                    var partialDeclaration = r.GetData(2) as PartialIdDeclarationStatement;
+                    var varList = r.GetData(3) as List<VarItem>;
                     var idDeclaration = partialDeclaration.DeclarationStatement;
                     var partialType = baseType;
                     if (partialDeclaration.ArrayType != null )
@@ -583,7 +580,41 @@ namespace DemoNavi
                         partialType = partialDeclaration.ArrayType;
                     }
                     idDeclaration.Type = partialType;
+                    idDeclaration.Modifier = r.GetData(0) as Modifier;
                     var idDeclarationList = new List<IdDeclarationStatement>() { idDeclaration };
+
+                    foreach (var varItem in varList)
+                    {
+                        IRType baseVarItemType = baseType;
+                        pointerCount = Convert.ToInt32(varItem.Pointers);
+                        for (int i = 0; i < pointerCount; i++)
+                        {
+                            baseVarItemType = new PointerType(baseVarItemType);
+                        }
+                        if (varItem.PartialIdDeclaration.ArrayType != null)
+                        {
+                            varItem.PartialIdDeclaration.ArrayType.Type = baseVarItemType;
+                            baseVarItemType = varItem.PartialIdDeclaration.ArrayType;
+                        }
+                        varItem.PartialIdDeclaration.DeclarationStatement.Type = baseVarItemType;
+                        idDeclarationList.Add(varItem.PartialIdDeclaration.DeclarationStatement);
+                    }
+                    return idDeclarationList;
+
+                case ProductionIndex.Vardecl_Semi2:
+                    // <Var Decl> ::= <Type> <Var> <Var List> ';'
+                    baseType = r.GetData(0) as IRType;
+                    partialDeclaration = r.GetData(1) as PartialIdDeclarationStatement;
+                    varList = r.GetData(2) as List<VarItem>;
+                    idDeclaration = partialDeclaration.DeclarationStatement;
+                    partialType = baseType;
+                    if (partialDeclaration.ArrayType != null )
+                    {
+                        partialDeclaration.ArrayType.Type = partialType;
+                        partialType = partialDeclaration.ArrayType;
+                    }
+                    idDeclaration.Type = partialType;
+                    idDeclarationList = new List<IdDeclarationStatement>() { idDeclaration };
 
 
                     foreach (var varItem in varList)
@@ -606,7 +637,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Vardecl_Semi3:
                     // <Var Decl> ::= <Mod> <Var> <Var List> ';'
-                    break;
+                    throw new NotImplementedException("<Var Decl> ::= <Mod> <Var> <Var List> ");
 
                 case ProductionIndex.Var_Id:
                     // <Var> ::= Id <Array>
@@ -656,28 +687,28 @@ namespace DemoNavi
                     return new VarItem( pointers,  var);
 
                 case ProductionIndex.Mod_Extern:
-                    // <Mod> ::= extern
+                    // <Mod> ::= extern no extern no
                     break;
 
                 case ProductionIndex.Mod_Static:
                     // <Mod> ::= static
-                    break;
-
+                    return new StaticModifier();
+                    
                 case ProductionIndex.Mod_Register:
                     // <Mod> ::= register
-                    break;
+                    return new RegisterModifier();
 
                 case ProductionIndex.Mod_Auto:
                     // <Mod> ::= auto
-                    break;
+                    return new AutoModifier();
 
                 case ProductionIndex.Mod_Volatile:
-                    // <Mod> ::= volatile
+                    // <Mod> ::= volatile no volatile no
                     break;
 
                 case ProductionIndex.Mod_Const:
                     // <Mod> ::= const
-                    break;
+                    return new ConstModifier();
 
                 case ProductionIndex.Enumdecl_Enum_Id_Lbrace_Rbrace_Semi:
                     // <Enum Decl> ::= enum Id '{' <Enum Def> '}' ';'
@@ -719,6 +750,13 @@ namespace DemoNavi
 
                 case ProductionIndex.Base:
                     // <Base> ::= <Sign> <Scalar>
+                    if (r.GetData(0).ToString() == "unsigned")
+                    { 
+                        if ( r.GetData(1) is IntType )
+                        {
+                            return new UnsignedIntType();
+                        }
+                    }
                     return r.GetData(1);
 
                 case ProductionIndex.Base_Struct_Id:
@@ -743,11 +781,11 @@ namespace DemoNavi
 
                 case ProductionIndex.Sign_Signed:
                     // <Sign> ::= signed
-                    break;
+                    return r.GetData(0);
 
                 case ProductionIndex.Sign_Unsigned:
                     // <Sign> ::= unsigned
-                    break;
+                    return r.GetData(0);
 
                 case ProductionIndex.Sign:
                     // <Sign> ::= 
@@ -867,15 +905,15 @@ namespace DemoNavi
 
                 case ProductionIndex.Normalstm_Goto_Id_Semi:
                     // <Normal Stm> ::= goto Id ';'
-                    break;
+                    return new GoToIdStatement();
 
                 case ProductionIndex.Normalstm_Break_Semi:
                     // <Normal Stm> ::= break ';'
-                    break;
+                    return new BreakStatement();
 
                 case ProductionIndex.Normalstm_Continue_Semi:
                     // <Normal Stm> ::= continue ';'
-                    break;
+                    return new ContinueStatement();
 
                 case ProductionIndex.Normalstm_Return_Semi:
                     // <Normal Stm> ::= return <Expr> ';'
@@ -924,7 +962,13 @@ namespace DemoNavi
 
                 case ProductionIndex.Expr_Comma:
                     // <Expr> ::= <Expr> ',' <Op Assign>
-                    break;
+                    var expr = r.GetData(0) as ExpressionList;
+                    if (expr != null)
+                    {
+                        return new ExpressionList(expr, r.GetData(2) as Expression);
+                    }
+                    else
+                        return new ExpressionList(r.GetData(0) as Expression, r.GetData(2) as Expression);
 
                 case ProductionIndex.Expr:
                     // <Expr> ::= <Op Assign>
@@ -1028,7 +1072,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Opequate_Exclameq:
                     // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
-                    return new NotEqualToExpression(left: r.GetData(0) as Expression, right: r.GetData(2) as Expression);
+                    return new NotEqualExpression(left: r.GetData(0) as Expression, right: r.GetData(2) as Expression);
 
                 case ProductionIndex.Opequate:
                     // <Op Equate> ::= <Op Compare>
@@ -1095,40 +1139,40 @@ namespace DemoNavi
 
                 case ProductionIndex.Opunary_Exclam:
                     // <Op Unary> ::= '!' <Op Unary>
-                    return r.get_Data(1);
+                    return new NotEqualToExpression(r.GetData(1) as Expression);
 
                 case ProductionIndex.Opunary_Tilde:
                     // <Op Unary> ::= '~' <Op Unary>
-                    return r.get_Data(1);
+                    return new OneComplementExpression(r.get_Data(1) as Expression);
 
                 case ProductionIndex.Opunary_Minus:
                     // <Op Unary> ::= '-' <Op Unary>
-                    return r.get_Data(1);
+                    return new NegateExpression(r.get_Data(1) as Expression);
 
                 case ProductionIndex.Opunary_Times:
                     // <Op Unary> ::= '*' <Op Unary>
-                    return r.get_Data(1);
+                    return new PointerExpression(r.get_Data(1) as Expression);
 
                 case ProductionIndex.Opunary_Amp:
                     // <Op Unary> ::= '&' <Op Unary>
-                    return r.get_Data(1);
+                    return new ReferenceExpression(r.get_Data(1) as Expression);
 
                 case ProductionIndex.Opunary_Plusplus:
                     // <Op Unary> ::= '++' <Op Unary>
-                    return r.get_Data(1);
+                    return new PreIncrementExpression(r.get_Data(1) as Expression);
 
                 case ProductionIndex.Opunary_Minusminus:
                     // <Op Unary> ::= '--' <Op Unary>
-                    return r.get_Data(1);
+                    return new PreDecrementExpression(r.GetData(1) as Expression);
 
                 case ProductionIndex.Opunary_Plusplus2:
                     // <Op Unary> ::= <Op Pointer> '++'
-                    return r.get_Data(0);
+                    return new PostIncrementExpression(r.get_Data(0) as Expression);
 
                 case ProductionIndex.Opunary_Minusminus2:
                     // <Op Unary> ::= <Op Pointer> '--'
-                    return r.get_Data(0);
-
+                    return new PostDecrementExpression(r.GetData(0) as Expression);
+  
                 case ProductionIndex.Opunary_Lparen_Rparen:
                     // <Op Unary> ::= '(' <Type> ')' <Op Unary>
                     break;
@@ -1166,7 +1210,6 @@ namespace DemoNavi
                     // <Value> ::= OctLiteral
                     return new DecValue(Convert.ToInt32(r.get_Data(0).ToString(),8));
 
-
                 case ProductionIndex.Value_Hexliteral:
                     // <Value> ::= HexLiteral
                     return new DecValue(Convert.ToInt32(r.GetData(0).ToString(),16));
@@ -1190,12 +1233,11 @@ namespace DemoNavi
 
                 case ProductionIndex.Value_Id_Lparen_Rparen:
                     // <Value> ::= Id '(' <Expr> ')'
-
-                    break;
-
+                    return new FunctionCallExpression(r.GetData(0).ToString(),r.GetData(2) as Expression);
+                   
                 case ProductionIndex.Value_Id_Lparen_Rparen2:
                     // <Value> ::= Id '(' ')'
-                    break;
+                    return new FunctionCallExpression(r.GetData(0).ToString());
 
                 case ProductionIndex.Value_Id:
                     // <Value> ::= Id
@@ -1210,7 +1252,7 @@ namespace DemoNavi
                         }
                         else
                             return new IdValue(r.GetData(0));
-                    ;
+                    
 
                 case ProductionIndex.Value_Lparen_Rparen:
                     // <Value> ::= '(' <Expr> ')'
