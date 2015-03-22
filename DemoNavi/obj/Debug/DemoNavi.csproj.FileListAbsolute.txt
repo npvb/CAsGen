@@ -1,0 +1,14 @@
+D:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\bin\Debug\C-ANSI.egt
+D:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\bin\Debug\DemoNavi.dll
+D:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\bin\Debug\DemoNavi.pdb
+D:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\bin\Debug\GOLD Engine.dll
+D:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\obj\Debug\DemoNavi.csprojResolveAssemblyReference.cache
+D:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\obj\Debug\DemoNavi.dll
+D:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\obj\Debug\DemoNavi.pdb
+E:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\obj\Debug\DemoNavi.csprojResolveAssemblyReference.cache
+E:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\obj\Debug\DemoNavi.dll
+E:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\obj\Debug\DemoNavi.pdb
+E:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\bin\Debug\C-ANSI.egt
+E:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\bin\Debug\DemoNavi.dll
+E:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\bin\Debug\DemoNavi.pdb
+E:\Proyecto Graduación\DemoNavi\DemoNavi\DemoNavi\bin\Debug\GOLD Engine.dll
