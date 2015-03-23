@@ -8,14 +8,11 @@ namespace DemoNavi.Parser
 {
     class EqualsExpression : BinaryExpression
     {
-        private IntermediateRepresentation.Expression left;
-        private IntermediateRepresentation.Expression right;
-
         public EqualsExpression(IntermediateRepresentation.Expression left, IntermediateRepresentation.Expression right)
         {
             // TODO: Complete member initialization
-            this.left = left;
-            this.right = right;
+            this.Left = left;
+            this.Right = right;
         }
         public override string ToString()
         {

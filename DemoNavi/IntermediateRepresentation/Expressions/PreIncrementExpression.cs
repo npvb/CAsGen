@@ -12,5 +12,10 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
         {
 
         }
+
+        public override string ToString()
+        {
+            return "++" + base.Expression;
+        }
     }
 }

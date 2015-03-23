@@ -29,5 +29,10 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
             this.Exprlist.Add(head);
             this.Exprlist.Add(tail);
         }
+
+        public override string ToString()
+        {
+            return string.Join(",", Exprlist.Select(p => p.ToString()));
+        }
     }
 }

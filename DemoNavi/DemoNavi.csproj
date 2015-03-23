@@ -42,6 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IntermediateRepresentation\Declarations\EnumDeclaration.cs" />
+    <Compile Include="IntermediateRepresentation\Declarations\EnumValue.cs" />
+    <Compile Include="IntermediateRepresentation\Declarations\StructDeclaration.cs" />
+    <Compile Include="IntermediateRepresentation\Declarations\UnionDeclaration.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\AdditionAssignmentExpression.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\AssignExpression.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\BinaryExpression.cs" />
@@ -70,7 +74,10 @@
     <Compile Include="IntermediateRepresentation\Expressions\NoOpExpression.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\NotEqualToExpression.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\OneComplementExpression.cs" />
+    <Compile Include="IntermediateRepresentation\Expressions\PointerAccessExpr.cs" />
+    <Compile Include="IntermediateRepresentation\Expressions\PointerArrayAccessExpr.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\PointerExpression.cs" />
+    <Compile Include="IntermediateRepresentation\Expressions\PointerReferenceAccessExpr.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\PreDecrementExpression.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\PostDecrementExpression.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\PreIncrementExpression.cs" />

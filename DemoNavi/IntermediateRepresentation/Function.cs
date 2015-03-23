@@ -13,6 +13,8 @@ namespace DemoNavi.IntermediateRepresentation
         private IRType type;
         private string id;
         private BlockStatement block;
+        private Function function;
+        private BlockStatement blockStatement;
 
         internal Types.IRType Type
         {
@@ -30,8 +32,8 @@ namespace DemoNavi.IntermediateRepresentation
         {
             this.type = type;
             this.id = id;
+            this.Parameters = new List<Parameter>();
         }
-
 
         public BlockStatement Block
         {

@@ -13,7 +13,13 @@ namespace DemoNavi.ConsoleHost
         static void Main(string[] args)
         {
             var parser = new DemoNavi.MyParser();
-            string program = @"int main() {
+            string program = @"
+                                struct st {
+                                    int x;
+                                    int y;
+                                };
+                                int main() {
+                                y = x->as.gre[90];
                                     main();
                                     main(1);            
                                     main(1,x,main());

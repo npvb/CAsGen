@@ -9,9 +9,7 @@ namespace DemoNavi.Parser
 {
     class CharLiteral : ValueExpression
     {
-        private string p;
-
-        public CharLiteral(object value)
+        public CharLiteral(byte value)
         {
             this.Value = value;
         }

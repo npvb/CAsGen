@@ -13,6 +13,7 @@ namespace DemoNavi
     using DemoNavi.IntermediateRepresentation.Statements;
     using DemoNavi.IntermediateRepresentation.Expressions;
     using DemoNavi.IntermediateRepresentation.Modifiers;
+    using DemoNavi.IntermediateRepresentation.Declarations;
     public class MyParser
     {
         public MyParser()
@@ -440,14 +441,13 @@ namespace DemoNavi
                     // <Decls> ::= <Decl> <Decls>
                     var declarationHead = r.GetData(0) as DeclarationStatement;
                     var declarationTail = r.GetData(1) as List<DeclarationStatement>;
-                    declarationTail.Insert(0, declarationHead);
+                    declarationTail.InsertNotNull(0, declarationHead);
                     return declarationTail;
 
                 case ProductionIndex.Decls2:
                     // <Decls> ::= 
                     return new List<DeclarationStatement>();
                     
-
                 case ProductionIndex.Decl:
                     // <Decl> ::= <Func Decl>
                     return r.GetData(0);
@@ -497,17 +497,19 @@ namespace DemoNavi
 
                 case ProductionIndex.Funcdecl_Lparen_Rparen2:
                     // <Func Decl> ::= <Func ID> '(' <Id List> ')' <Struct Def> <Block>
-                    break;
+                    throw new NotImplementedException();
 
                 case ProductionIndex.Funcdecl_Lparen_Rparen3:
                     // <Func Decl> ::= <Func ID> '(' ')' <Block>
-                    break;
+                    function = r.GetData(0) as Function;
+                    function.Block = r.GetData(3) as BlockStatement;
+                    return function;
 
                 case ProductionIndex.Params_Comma:
                     // <Params> ::= <Param> ',' <Params>
                     var paramHead = r.GetData(0) as Parameter;
                     var paramTail = r.GetData(2) as List<Parameter>;
-                    paramTail.Insert(0,paramHead);
+                    paramTail.InsertNotNull(0,paramHead);
                     return paramTail;
 
                 case ProductionIndex.Params:
@@ -520,32 +522,41 @@ namespace DemoNavi
 
                 case ProductionIndex.Param_Id:
                     // <Param> ::= <Type> Id
-                    return new Parameter(r.GetData(0) as Type, r.GetData(1).ToString());
+                    return new Parameter(r.GetData(0) as IRType, r.GetData(1).ToString());
                     
 
                 case ProductionIndex.Types_Comma:
                     // <Types> ::= <Type> ',' <Types>
-                    break;
+                    var typeHead = r.GetData(0) as IRType;
+                    var typeTail = r.GetData(2) as List<IRType>;
+                    typeTail.InsertNotNull(0, typeHead);
+
+                    return typeTail;
 
                 case ProductionIndex.Types:
                     // <Types> ::= <Type>
-                    break;
+                    return new List<IRType> { r.GetData(0) as IRType};
 
                 case ProductionIndex.Idlist_Id_Comma:
                     // <Id List> ::= Id ',' <Id List>
-                    break;
-
+                    var idHead = r.GetData(0).ToString();
+                    var idTail = r.GetData(2) as List<string>;
+                    idTail.InsertNotNull(0, idHead);
+                    return idTail;
+                    
                 case ProductionIndex.Idlist_Id:
                     // <Id List> ::= Id
-                    break;
-
+                    var idList = r.GetData(0).ToString();
+                    return new List<string>() { idList };
+                    
                 case ProductionIndex.Funcid_Id:
                     // <Func ID> ::= <Type> Id
-                    return new Function(r.GetData(0) as Type, r.GetData(1).ToString());
+                    return new Function(r.GetData(0) as IRType, r.GetData(1).ToString());
 
                 case ProductionIndex.Funcid_Id2:
                     // <Func ID> ::= Id
-                    break;
+                    //return new Function(r.GetData(0).ToString());
+                    throw new NotImplementedException("<Func ID> ::= Id");
 
                 case ProductionIndex.Typedefdecl_Typedef_Id_Semi:
                     // <Typedef Decl> ::= typedef <Type> Id ';'
@@ -553,24 +564,23 @@ namespace DemoNavi
 
                 case ProductionIndex.Structdecl_Struct_Id_Lbrace_Rbrace_Semi:
                     // <Struct Decl> ::= struct Id '{' <Struct Def> '}' ';'
-                    break;
+                    return new StructDeclaration(r.GetData(0).ToString(), r.GetData(3) as List<IdDeclarationStatement>);
 
                 case ProductionIndex.Uniondecl_Union_Id_Lbrace_Rbrace_Semi:
                     // <Union Decl> ::= union Id '{' <Struct Def> '}' ';'
-                    break;
+                    return new UnionDeclaration(r.GetData(1).ToString(), r.GetData(3) as List<IdDeclarationStatement>);
 
                 case ProductionIndex.Structdef:
                     // <Struct Def> ::= <Var Decl> <Struct Def>
-                     var declarationstm = r.GetData(0) as DeclarationStatement;
-                     var structdeftail = r.GetData(1) as List<DeclarationStatement>;
-                     structdeftail.Insert(0,declarationstm);
-
-                     return structdeftail;
+                     var declarationstm = r.GetData(0) as List<IdDeclarationStatement>;
+                     var structdeftail = r.GetData(1) as List<IdDeclarationStatement>;
+                     declarationstm.AddRange(structdeftail);
+                     return declarationstm;
 
                 case ProductionIndex.Structdef2:
                     // <Struct Def> ::= <Var Decl>
-                    declarationstm = r.GetData(0) as DeclarationStatement;
-                    return new List<DeclarationStatement>() { declarationstm };
+                    declarationstm = r.GetData(0) as List<IdDeclarationStatement>;
+                    return declarationstm;
 
                 case ProductionIndex.Vardecl_Semi:
                     // <Var Decl> ::= <Mod> <Type> <Var> <Var List> ';'
@@ -678,7 +688,7 @@ namespace DemoNavi
                     // <Var List> ::= ',' <Var Item> <Var List>
                     var varItemHead = r.GetData(1) as VarItem;
                     var varItemTail = r.GetData(2) as List<VarItem>;
-                    varItemTail.Insert(0, varItemHead);
+                    varItemTail.InsertNotNull(0, varItemHead);
                     return varItemTail;
 
                 case ProductionIndex.Varlist:
@@ -693,7 +703,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Mod_Extern:
                     // <Mod> ::= extern no extern no
-                    break;
+                    break;//ver que pedo con la excepcion
 
                 case ProductionIndex.Mod_Static:
                     // <Mod> ::= static
@@ -709,7 +719,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Mod_Volatile:
                     // <Mod> ::= volatile no volatile no
-                    break;
+                    break; //ver que pedo con la excepcion
 
                 case ProductionIndex.Mod_Const:
                     // <Mod> ::= const
@@ -717,15 +727,19 @@ namespace DemoNavi
 
                 case ProductionIndex.Enumdecl_Enum_Id_Lbrace_Rbrace_Semi:
                     // <Enum Decl> ::= enum Id '{' <Enum Def> '}' ';'
-                    break;
+                    return new EnumDeclaration(r.GetData(1).ToString(), r.GetData(3) as List<EnumValue>);
 
                 case ProductionIndex.Enumdef_Comma:
                     // <Enum Def> ::= <Enum Val> ',' <Enum Def>
-                    break;
+                    var enumHead = r.GetData(0) as EnumValue;
+                    var enumTail = r.GetData(2) as List<EnumValue>;
+                    enumTail.InsertNotNull(0, enumHead);
+
+                    return enumTail;
 
                 case ProductionIndex.Enumdef:
                     // <Enum Def> ::= <Enum Val>
-                    break;
+                    return new List<EnumValue> {r.GetData(0) as EnumValue};
 
                 case ProductionIndex.Enumval_Id:
                     // <Enum Val> ::= Id
@@ -733,15 +747,15 @@ namespace DemoNavi
 
                 case ProductionIndex.Enumval_Id_Eq_Octliteral:
                     // <Enum Val> ::= Id '=' OctLiteral
-                    break;
+                    return new EnumValue(r.GetData(0).ToString(), Convert.ToInt32(r.GetData(2).ToString(), 8));
 
                 case ProductionIndex.Enumval_Id_Eq_Hexliteral:
                     // <Enum Val> ::= Id '=' HexLiteral
-                    break;
+                    return new EnumValue(r.GetData(0).ToString(), Convert.ToInt32(r.GetData(2).ToString(), 16));
 
                 case ProductionIndex.Enumval_Id_Eq_Decliteral:
                     // <Enum Val> ::= Id '=' DecLiteral
-                    break;
+                    return new EnumValue(r.GetData(0).ToString(), Convert.ToInt32(r.GetData(2).ToString(), 10));
 
                 case ProductionIndex.Type:
                     // <Type> ::= <Base> <Pointers>
@@ -791,7 +805,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Base_Struct_Id:
                     // <Base> ::= struct Id
-                    return new StructType(r.GetData(1).ToString());
+                    return new StructType(r.GetData(1).ToString());//Crear una clase para definir el tipo inferido del struct
 
                 case ProductionIndex.Base_Struct_Lbrace_Rbrace:
                     // <Base> ::= struct '{' <Struct Def> '}'
@@ -799,7 +813,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Base_Union_Id:
                     // <Base> ::= union Id
-                    return new UnionType(r.GetData(1).ToString());
+                    return new UnionType(r.GetData(1).ToString());//Crear una clase para definir el tipo inferido del union
 
                 case ProductionIndex.Base_Union_Lbrace_Rbrace:
                     // <Base> ::= union '{' <Struct Def> '}'
@@ -863,11 +877,11 @@ namespace DemoNavi
 
                 case ProductionIndex.Stm:
                     // <Stm> ::= <Var Decl>
-                    break;
+                    return r.GetData(0);
 
                 case ProductionIndex.Stm_Id_Colon:
                     // <Stm> ::= Id ':'
-                    return r.GetData(0).ToString();
+                    return r.GetData(0).ToString(); //labelstatement class missing
 
                 case ProductionIndex.Stm_If_Lparen_Rparen:
                     // <Stm> ::= if '(' <Expr> ')' <Stm>
@@ -935,7 +949,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Normalstm_Goto_Id_Semi:
                     // <Normal Stm> ::= goto Id ';'
-                    return new GoToIdStatement();
+                    return new GoToIdStatement(); //guardar el id
 
                 case ProductionIndex.Normalstm_Break_Semi:
                     // <Normal Stm> ::= break ';'
@@ -965,7 +979,7 @@ namespace DemoNavi
                     // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
                     var caseStatementHead = new CaseStatement(r.GetData(1) as ValueExpression, r.GetData(3) as List<Statement>);
                     var caseStatementTail = r.GetData(4) as List<DefaultCaseStatement>;
-                    caseStatementTail.Insert(0, caseStatementHead);
+                    caseStatementTail.InsertNotNull(0, caseStatementHead);
                     return caseStatementTail;
 
                 case ProductionIndex.Casestms_Default_Colon:
@@ -982,9 +996,23 @@ namespace DemoNavi
 
                 case ProductionIndex.Stmlist:
                     // <Stm List> ::= <Stm> <Stm List>
-                    var head = r.GetData(1) as List<Statement>;
-                    head.Insert(0, r.GetData(0) as Statement);
-                    return head;
+                    var statemetListTail = r.GetData(1) as List<Statement>;
+                    var declList = r.GetData(0) as List<IdDeclarationStatement>;
+                    if (declList != null)
+                    {
+                        var statementList = new List<Statement>();
+                        foreach (var dec in declList)
+                        {
+                            statementList.AddNotNull(dec);
+                        }
+                        foreach (var TailItem in statemetListTail)
+                        {
+                            statementList.AddNotNull(TailItem);
+                        }
+                        return statementList;
+                    }
+                    statemetListTail.InsertNotNull(0, r.GetData(0) as Statement);
+                    return statemetListTail;
 
                 case ProductionIndex.Stmlist2:
                     // <Stm List> ::= 
@@ -1222,15 +1250,15 @@ namespace DemoNavi
 
                 case ProductionIndex.Oppointer_Dot:
                     // <Op Pointer> ::= <Op Pointer> '.' <Value>
-                    break;
+                    return new PointerReferenceAccessExpr(r.GetData(0) as Expression, r.GetData(2) as Expression);
 
                 case ProductionIndex.Oppointer_Minusgt:
                     // <Op Pointer> ::= <Op Pointer> '->' <Value>
-                    break;
+                    return new PointerAccessExpr(r.GetData(0) as Expression, r.GetData(2) as Expression);
 
                 case ProductionIndex.Oppointer_Lbracket_Rbracket:
                     // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
-                    break;
+                    return new PointerArrayAccessExpr(r.GetData(0) as Expression, r.GetData(2) as Expression);
 
                 case ProductionIndex.Oppointer:
                     // <Op Pointer> ::= <Value>
@@ -1247,7 +1275,6 @@ namespace DemoNavi
                 case ProductionIndex.Value_Decliteral:
                     // <Value> ::= DecLiteral
                     return new DecValue(Convert.ToInt32(r.get_Data(0)));
-                    
 
                 case ProductionIndex.Value_Stringliteral:
                     // <Value> ::= StringLiteral
@@ -1255,7 +1282,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Value_Charliteral:
                     // <Value> ::= CharLiteral
-                    return new CharLiteral(r.GetData(0).ToString());
+                    return new CharLiteral(Convert.ToByte(Convert.ToChar(r.GetData(0))));
 
                 case ProductionIndex.Value_Floatliteral:
                     // <Value> ::= FloatLiteral

@@ -30,5 +30,10 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
             this.Id = id;
             this.Parameters = new ExpressionList();
         }
+
+        public override string ToString()
+        {
+            return Id + "(" + Parameters + ")";
+        }
     }
 }

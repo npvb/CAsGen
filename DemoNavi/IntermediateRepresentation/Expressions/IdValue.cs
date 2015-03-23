@@ -15,5 +15,10 @@ namespace DemoNavi.Parser
             // TODO: Complete member initialization
             this.p = p;
         }
+
+        public override string ToString()
+        {
+            return p.ToString();
+        }
     }
 }

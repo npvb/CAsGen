@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class UnionType: IRType
+    class UnionType : IRType
     {
         public string Id { get; set; }
         public List<DeclarationStatement> DeclarationStatement { get; set; }
