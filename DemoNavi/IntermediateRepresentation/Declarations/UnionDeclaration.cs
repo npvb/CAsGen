@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DemoNavi.IntermediateRepresentation.Declarations
 {
-    class UnionDeclaration
+    class UnionDeclaration : DeclarationStatement
     {
         public string Id { get; set; }
         public List<IdDeclarationStatement> DeclarationStatement { get; set; }
@@ -16,7 +16,9 @@ namespace DemoNavi.IntermediateRepresentation.Declarations
             this.Id = id;
             this.DeclarationStatement = declarationstatement;
         }
-
-
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

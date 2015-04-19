@@ -23,5 +23,10 @@ namespace DemoNavi.IntermediateRepresentation
         {
             return "return " + ReturnExpression.ToString();
         }
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

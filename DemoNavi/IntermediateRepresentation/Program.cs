@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DemoNavi.IntermediateRepresentation.Semantic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,19 @@ namespace DemoNavi.IntermediateRepresentation
         public Program(List<DeclarationStatement> declarations)
         {
             this.Declarations = declarations;
+            this.SemanticValidation();
+        }
+        public void SemanticValidation() 
+        {
+            SemanticContext semanticContext = new SemanticContext();
+            semanticContext.FunctionDeclarations = Declarations.OfType<FunctionDeclaration>();
+
+            foreach (var declaration in Declarations)
+            {
+                declaration.SemanticValidation(semanticContext);
+                
+            }
+            
         }
     }
 }

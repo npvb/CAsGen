@@ -1,5 +1,6 @@
 ﻿using DemoNavi.Recompilers;
 using DemoNavi.Recompilers.Basic;
+using DemoNavi.Recompilers.MIPS32;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace DemoNavi.ConsoleHost
                                     int x;
                                     int y;
                                 };
+int x;
                                 int main() {
                                 y = x->as.gre[90];
                                     main();
@@ -55,10 +57,23 @@ namespace DemoNavi.ConsoleHost
     
                                      return x;
                               }";
+            program = @"
+int main()
+{
+    return add(10,20);
+}
+
+int add(int a, int b)
+{
+	int res;
+	res = a + b;
+	return res;
+}";
+
             parser.Parse(program);
             var programa = parser.Program;
-           // BasicRecompiler rec = new BasicRecompiler();
-           //rec.Recompile(programa);
+           Recompiler rec = new Mips32Recompiler();
+           Console.WriteLine(rec.Recompile(programa));
             Console.ReadKey();
         }
     }

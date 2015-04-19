@@ -19,5 +19,10 @@ namespace DemoNavi.IntermediateRepresentation.Statements
             this.Loop = loop;
             this.Body = body;
         }
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

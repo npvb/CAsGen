@@ -6,25 +6,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DemoNavi.IntermediateRepresentation
+namespace DemoNavi.IntermediateRepresentation.Declarations
 {
-    class IdDeclarationStatement : Statement
-    {
-        public string Id { get; set; }
+    class VarDeclaration : DeclarationStatement
+    { //TODO:: Terminar la revisión de vardeclaration
+       public string Id { get; set; }
         public Expression InitializationExpression { get; set; }
         public IRType Type { get; set; }
         public Modifier Modifier { get; set; }
-        public IdDeclarationStatement(string id, Expression initializationExpression) : this(id)
+        public VarDeclaration(string id, Expression initializationExpression) : this(id)
         {
             this.InitializationExpression = initializationExpression;
         }
-
-        public IdDeclarationStatement(string id)
+        public VarDeclaration(string id)
         {
             this.Id = id;
             this.Modifier = new AutoModifier();
         }
-        public IdDeclarationStatement(string id, Expression initializationExpression, IRType type)
+        public VarDeclaration(string id, Expression initializationExpression, IRType type)
         {
             this.Id = id;
             this.InitializationExpression = initializationExpression;

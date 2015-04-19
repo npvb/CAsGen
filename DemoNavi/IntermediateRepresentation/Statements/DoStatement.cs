@@ -15,5 +15,10 @@ namespace DemoNavi.IntermediateRepresentation.Statements
             this.Expressions = expresion;
             this.Statements = statement;
         }
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

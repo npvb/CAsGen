@@ -46,6 +46,7 @@
     <Compile Include="IntermediateRepresentation\Declarations\EnumValue.cs" />
     <Compile Include="IntermediateRepresentation\Declarations\StructDeclaration.cs" />
     <Compile Include="IntermediateRepresentation\Declarations\UnionDeclaration.cs" />
+    <Compile Include="IntermediateRepresentation\Declarations\VarDeclaration.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\AdditionAssignmentExpression.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\AssignExpression.cs" />
     <Compile Include="IntermediateRepresentation\Expressions\BinaryExpression.cs" />
@@ -95,6 +96,8 @@
     <Compile Include="IntermediateRepresentation\Modifiers\ConstModifier.cs" />
     <Compile Include="IntermediateRepresentation\Modifiers\RegisterModifier.cs" />
     <Compile Include="IntermediateRepresentation\Modifiers\StaticModifier.cs" />
+    <Compile Include="IntermediateRepresentation\Semantic\SemanticContext.cs" />
+    <Compile Include="IntermediateRepresentation\Semantic\SemanticValidationException.cs" />
     <Compile Include="IntermediateRepresentation\Statements\BreakStatement.cs" />
     <Compile Include="IntermediateRepresentation\Statements\CaseStatement.cs" />
     <Compile Include="IntermediateRepresentation\Statements\ContinueStatement.cs" />
@@ -111,8 +114,8 @@
     <Compile Include="IntermediateRepresentation\Statements\IfStatement.cs" />
     <Compile Include="IntermediateRepresentation\Types\ArrayType.cs" />
     <Compile Include="IntermediateRepresentation\Types\CharType.cs" />
-    <Compile Include="IntermediateRepresentation\Statements\DeclarationStatement.cs" />
-    <Compile Include="IntermediateRepresentation\Function.cs" />
+    <Compile Include="IntermediateRepresentation\Declarations\DeclarationStatement.cs" />
+    <Compile Include="IntermediateRepresentation\Declarations\FunctionDeclaration.cs" />
     <Compile Include="IntermediateRepresentation\Identifier.cs" />
     <Compile Include="IntermediateRepresentation\Types\EnumType.cs" />
     <Compile Include="IntermediateRepresentation\Types\IntType.cs" />
@@ -154,6 +157,7 @@
     <Compile Include="IntermediateRepresentation\Types\UnsignedShortType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Recompilers\Basic\BasicRecompiler.cs" />
+    <Compile Include="Recompilers\MIPS32\Mips32Recompiler.cs" />
     <Compile Include="Recompilers\Recompiler.cs" />
     <Compile Include="Utility\ParserExtensions.cs" />
   </ItemGroup>

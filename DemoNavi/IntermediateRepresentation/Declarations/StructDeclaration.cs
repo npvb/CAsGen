@@ -16,5 +16,12 @@ namespace DemoNavi.IntermediateRepresentation.Declarations
             this.Id = id;
             this.DeclarationStatement = declarationstatement;
         }
+
+
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

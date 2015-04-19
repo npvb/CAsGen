@@ -12,6 +12,17 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
         {
             base.Value = value;
         }
-        
+
+
+        public override Types.IRType GetIRType()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

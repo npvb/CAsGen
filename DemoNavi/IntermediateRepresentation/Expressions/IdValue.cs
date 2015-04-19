@@ -20,5 +20,15 @@ namespace DemoNavi.Parser
         {
             return p.ToString();
         }
+
+        public override IntermediateRepresentation.Types.IRType GetIRType()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override void SemanticValidation(IntermediateRepresentation.Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

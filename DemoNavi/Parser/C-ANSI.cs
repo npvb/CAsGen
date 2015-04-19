@@ -402,7 +402,7 @@ namespace DemoNavi
 
                     case GOLD.ParseMessage.Accept:
                         //Accepted!
-                       Program = new Program(parser.CurrentReduction as List<DeclarationStatement>);   //The root node!                 
+                        Program = new Program(parser.CurrentReduction as List<DeclarationStatement>);   //The root node!                 
                         done = true;
                         accepted = true;
                         break;
@@ -490,7 +490,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Funcdecl_Lparen_Rparen:
                     // <Func Decl> ::= <Func ID> '(' <Params> ')' <Block>
-                    var function = r.GetData(0) as Function;
+                    var function = r.GetData(0) as FunctionDeclaration;
                     function.Parameters = r.GetData(2) as List<Parameter>;
                     function.Block = r.GetData(4) as BlockStatement;
                     return function;
@@ -501,7 +501,7 @@ namespace DemoNavi
 
                 case ProductionIndex.Funcdecl_Lparen_Rparen3:
                     // <Func Decl> ::= <Func ID> '(' ')' <Block>
-                    function = r.GetData(0) as Function;
+                    function = r.GetData(0) as FunctionDeclaration;
                     function.Block = r.GetData(3) as BlockStatement;
                     return function;
 
@@ -551,7 +551,7 @@ namespace DemoNavi
                     
                 case ProductionIndex.Funcid_Id:
                     // <Func ID> ::= <Type> Id
-                    return new Function(r.GetData(0) as IRType, r.GetData(1).ToString());
+                    return new FunctionDeclaration(r.GetData(0) as IRType, r.GetData(1).ToString());
 
                 case ProductionIndex.Funcid_Id2:
                     // <Func ID> ::= Id

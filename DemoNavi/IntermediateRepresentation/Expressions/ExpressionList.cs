@@ -34,5 +34,15 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
         {
             return string.Join(",", Exprlist.Select(p => p.ToString()));
         }
+
+        public override Types.IRType GetIRType()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

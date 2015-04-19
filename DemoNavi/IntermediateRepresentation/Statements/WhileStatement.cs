@@ -21,5 +21,10 @@ namespace DemoNavi.IntermediateRepresentation.Statements
         {
             return "while ( " + Expressions + ")" + Statements;
         }
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

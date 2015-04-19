@@ -17,6 +17,16 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
             this.left = left;
             this.right = right;
         }
-  
+
+
+        public override Types.IRType GetIRType()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

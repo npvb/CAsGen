@@ -16,5 +16,10 @@ namespace DemoNavi.IntermediateRepresentation.Statements
             this.CaseStatements = caseStatements;
             
         }
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

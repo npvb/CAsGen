@@ -8,5 +8,9 @@ namespace DemoNavi.IntermediateRepresentation.Statements
 {
     class BreakStatement : Statement
     {
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

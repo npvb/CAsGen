@@ -27,13 +27,13 @@ namespace DemoNavi.Recompilers.Basic
         private void GenerateDeclaration(DeclarationStatement declaration, StringBuilder programBuilder)
         {
             var declarationType = declaration.GetType();
-            if (declaration is Function)
+            if (declaration is FunctionDeclaration)
             {
-                GenerateFunction(declaration as Function, programBuilder);
+                GenerateFunction(declaration as FunctionDeclaration, programBuilder);
             }
         }
 
-        private void GenerateFunction(Function function, StringBuilder programBuilder)
+        private void GenerateFunction(FunctionDeclaration function, StringBuilder programBuilder)
         {
             string parameterFormat = "ByVal {0} As {1}";
             string functionFormat = "Public Function {0}({1}){2}{3}";

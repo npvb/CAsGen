@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DemoNavi.IntermediateRepresentation.Semantic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,14 @@ namespace DemoNavi.IntermediateRepresentation.Statements
                 throw new NullReferenceException("statementList");
             }
             this.StatementList = statementList;                
+        }
+
+        internal override void SemanticValidation(SemanticContext semanticContext)
+        {
+            foreach (var statement in StatementList)
+            {
+                statement.SemanticValidation(semanticContext);
+            }
         }
     }
 }

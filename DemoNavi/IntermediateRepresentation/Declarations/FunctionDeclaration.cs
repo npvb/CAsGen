@@ -6,15 +6,14 @@ using System.Threading.Tasks;
 
 namespace DemoNavi.IntermediateRepresentation
 {
+    using DemoNavi.IntermediateRepresentation.Semantic;
     using DemoNavi.IntermediateRepresentation.Statements;
     using DemoNavi.IntermediateRepresentation.Types;
-    class Function : DeclarationStatement
+    class FunctionDeclaration : DeclarationStatement
     {
         private IRType type;
         private string id;
         private BlockStatement block;
-        private Function function;
-        private BlockStatement blockStatement;
 
         internal Types.IRType Type
         {
@@ -28,7 +27,7 @@ namespace DemoNavi.IntermediateRepresentation
         }
         public List<Parameter> Parameters { get; set; }
 
-        public Function(IRType type, string id)
+        public FunctionDeclaration(IRType type, string id)
         {
             this.type = type;
             this.id = id;
@@ -54,6 +53,31 @@ namespace DemoNavi.IntermediateRepresentation
         public override string ToString()
         {
             return string.Format("{0} {1} ({2}) {{ {3} }}", type, id, string.Join(",", Parameters), string.Join(Environment.NewLine, Block.StatementList));
+        }
+
+        internal override void SemanticValidation(SemanticContext semanticContext)
+        {
+            bool multiMatch =  semanticContext.FunctionDeclarations.Where(f =>
+            {
+                bool match = true;
+                match = f.Id == this.Id && f.Parameters.Count == this.Parameters.Count;
+                if (match)
+                {
+                    for (int i = 0; i < f.Parameters.Count; i++)
+                    {
+                        match = f.Parameters[i].Type == this.Parameters[i].Type;
+                        if (!match)
+                            break;
+                    }
+                }
+                return match;
+            }).Count() == 1;
+
+            if (!multiMatch) 
+            {
+                throw new SemanticValidationException("Ambiguous Type of Function Definition: " + id);
+            }
+            
         }
     }
 }

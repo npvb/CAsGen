@@ -8,5 +8,9 @@ namespace DemoNavi.IntermediateRepresentation.Statements
 {
     class GoToIdStatement : Statement
     {
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

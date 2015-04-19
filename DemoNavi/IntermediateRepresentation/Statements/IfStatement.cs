@@ -33,5 +33,10 @@ namespace DemoNavi.IntermediateRepresentation.Statements
             return "if ( " + Expressions + ")" + Statements + "else" + IfFalse;
             
         }
+
+        internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
