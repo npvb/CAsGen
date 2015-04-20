@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class CharType : IRType
+    class CharType : NumericType
     {
         public override string ToString()
         {

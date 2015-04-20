@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class FloatType : IRType
+    class FloatType : NumericType
     {
         public override string ToString()
         {

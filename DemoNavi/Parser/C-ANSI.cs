@@ -1308,7 +1308,7 @@ namespace DemoNavi
                             return new DecValue(0);
                         }
                         else
-                            return new IdValue(r.GetData(0));
+                            return new IdValue(r.GetData(0).ToString());
                     
 
                 case ProductionIndex.Value_Lparen_Rparen:

@@ -120,6 +120,7 @@
     <Compile Include="IntermediateRepresentation\Types\EnumType.cs" />
     <Compile Include="IntermediateRepresentation\Types\IntType.cs" />
     <Compile Include="IntermediateRepresentation\Parameter.cs" />
+    <Compile Include="IntermediateRepresentation\Types\NumericType.cs" />
     <Compile Include="IntermediateRepresentation\Types\PointerType.cs" />
     <Compile Include="IntermediateRepresentation\Program.cs" />
     <Compile Include="IntermediateRepresentation\Statements\ReturnStatement.cs" />

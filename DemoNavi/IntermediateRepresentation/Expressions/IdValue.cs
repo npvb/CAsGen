@@ -1,4 +1,5 @@
 ﻿using DemoNavi.IntermediateRepresentation;
+using DemoNavi.IntermediateRepresentation.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,27 +9,28 @@ namespace DemoNavi.Parser
 {
     class IdValue : Expression
     {
-        private object p;
-
-        public IdValue(object p)
+        private string id;
+        private IRType returnType;
+        public IdValue(string id)
         {
             // TODO: Complete member initialization
-            this.p = p;
+            this.id = id;
         }
 
         public override string ToString()
         {
-            return p.ToString();
+            return id;
         }
 
         public override IntermediateRepresentation.Types.IRType GetIRType()
         {
-            throw new NotImplementedException();
+            return returnType;
         }
 
         internal override void SemanticValidation(IntermediateRepresentation.Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+            semanticContext.IdExistInScope(this.id);
+            returnType = semanticContext.GetIdType(this.id);
         }
     }
 }

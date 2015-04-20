@@ -6,11 +6,7 @@ using System.Threading.Tasks;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class IntType : NumericType
+    internal abstract class  NumericType : IRType
     {
-        public override string ToString()
-        {
-            return "int";
-        }
     }
 }

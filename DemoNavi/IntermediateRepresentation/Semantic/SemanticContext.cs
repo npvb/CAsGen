@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DemoNavi.IntermediateRepresentation.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,19 @@ namespace DemoNavi.IntermediateRepresentation.Semantic
     class SemanticContext
     {
         public IEnumerable<FunctionDeclaration> FunctionDeclarations {get; set;}
+        public bool IdExistInSameScope(string id)
+        {
+            return false;
+        }
+        public bool IdExistInScope(string id)
+        {
+            return true;
+        }
+
+        public IRType GetIdType(string id) 
+        {
+            return new IntType();
+        }
 
     }
 }

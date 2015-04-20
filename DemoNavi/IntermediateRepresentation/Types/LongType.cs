@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class LongType : IRType
+    class LongType : NumericType
     {
         public override string ToString()
         {

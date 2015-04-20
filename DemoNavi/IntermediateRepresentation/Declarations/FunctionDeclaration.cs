@@ -77,7 +77,7 @@ namespace DemoNavi.IntermediateRepresentation
             {
                 throw new SemanticValidationException("Ambiguous Type of Function Definition: " + id);
             }
-            
+            Block.SemanticValidation(semanticContext);
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class ShortType
+    class ShortType : NumericType
     {
         public override string ToString()
         {

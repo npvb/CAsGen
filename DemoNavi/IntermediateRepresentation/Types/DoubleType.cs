@@ -6,7 +6,7 @@ using System.Text;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class DoubleType : IRType
+    class DoubleType : NumericType
     {
         public override string ToString()
         {
