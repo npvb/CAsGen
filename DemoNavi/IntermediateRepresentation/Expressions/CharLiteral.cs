@@ -19,7 +19,6 @@ namespace DemoNavi.Parser
             return Value.ToString();
         }
 
-
         public override IntermediateRepresentation.Types.IRType GetIRType()
         {
             throw new NotImplementedException();

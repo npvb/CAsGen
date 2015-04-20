@@ -1,4 +1,5 @@
 ﻿using DemoNavi.IntermediateRepresentation;
+using DemoNavi.IntermediateRepresentation.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
     {
         private IntermediateRepresentation.Expression left;
         private IntermediateRepresentation.Expression right;
+        private IRType returnType;
 
         public NotEqualExpression(IntermediateRepresentation.Expression left, IntermediateRepresentation.Expression right)
         {
@@ -25,12 +27,22 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 
         public override Types.IRType GetIRType()
         {
-            throw new NotImplementedException();
+            return returnType;
         }
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+            Left.SemanticValidation(semanticContext);
+            Right.SemanticValidation(semanticContext);
+
+            if (!(Left.GetIRType() is NumericType && Right.GetIRType() is NumericType))
+            {
+                throw new Semantic.SemanticValidationException("No se puede operar");
+            }
+            else
+            {
+                returnType = new BoolType(); //evaluar cual tipo de podría asignar dependiendo de su tamanio
+            }
         }
     }
 }

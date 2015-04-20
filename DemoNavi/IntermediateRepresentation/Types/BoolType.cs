@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace DemoNavi.IntermediateRepresentation.Types
 {
-    class VoidType : IRType
+    class BoolType : NumericType
     {
         public override string ToString()
         {
-            return "void";
+            return "bool";
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using DemoNavi.IntermediateRepresentation;
 using DemoNavi.IntermediateRepresentation.Expressions;
+using DemoNavi.IntermediateRepresentation.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,12 +23,13 @@ namespace DemoNavi.Parser
 
         public override IntermediateRepresentation.Types.IRType GetIRType()
         {
-            throw new NotImplementedException();
+            //TODO:
+            return new VoidType();
         }
 
         internal override void SemanticValidation(IntermediateRepresentation.Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+           //TODO:
         }
     }
 }

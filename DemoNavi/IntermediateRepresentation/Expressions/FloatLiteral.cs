@@ -1,4 +1,5 @@
 ﻿using DemoNavi.IntermediateRepresentation;
+using DemoNavi.IntermediateRepresentation.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 {
     class FloatLiteral : ValueExpression
     {
+        private IRType returnType;
         public FloatLiteral(double value)
         {
             base.Value = value;
@@ -16,13 +18,12 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 
         public override Types.IRType GetIRType()
         {
-            throw new NotImplementedException();
+            return returnType;
         }
-
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+            returnType = new FloatType();
         }
     }
 }

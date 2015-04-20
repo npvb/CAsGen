@@ -20,6 +20,11 @@ namespace DemoNavi.IntermediateRepresentation.Types
         {
             this.baseType = baseType;
         }
+
+        public PointerType()
+        {
+            // TODO: Complete member initialization
+        }
         public override string ToString()
         {
             return baseType.ToString() + "*";

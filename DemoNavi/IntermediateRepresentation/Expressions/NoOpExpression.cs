@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DemoNavi.IntermediateRepresentation.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,12 +11,12 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
     {
         public override Types.IRType GetIRType()
         {
-            throw new NotImplementedException();
+            return new VoidType();
         }
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+           
         }
     }
 }

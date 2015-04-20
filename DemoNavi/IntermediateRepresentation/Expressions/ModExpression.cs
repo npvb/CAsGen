@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DemoNavi.IntermediateRepresentation.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,8 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 {
     class ModExpression : BinaryExpression
      {
+        private IRType returnType;
+
         public ModExpression(IntermediateRepresentation.Expression left, IntermediateRepresentation.Expression right)
         {
             // TODO: Complete member initialization
@@ -16,17 +19,27 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
         }
         public override string ToString()
         {
-            return base.Left.ToString() + " &= " + base.Right.ToString();
+            return base.Left.ToString() + " % " + base.Right.ToString();
         }
 
         public override Types.IRType GetIRType()
         {
-            throw new NotImplementedException();
+            return returnType;
         }
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+            Left.SemanticValidation(semanticContext);
+            Right.SemanticValidation(semanticContext);
+
+            if (!(Left.GetIRType() is NumericType && Right.GetIRType() is NumericType))
+            {
+                throw new Semantic.SemanticValidationException("No se puede operar");
+            }
+            else
+            {
+                returnType = Left.GetIRType(); //evaluar cual tipo de podría asignar dependiendo de su tamanio
+            }
         }
      }
 }

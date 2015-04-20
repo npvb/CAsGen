@@ -72,8 +72,8 @@ int add(int a, int b)
 
             parser.Parse(program);
             var programa = parser.Program;
-           Recompiler rec = new Mips32Recompiler();
-           Console.WriteLine(rec.Recompile(programa));
+            Recompiler rec = new Mips32Recompiler();
+            Console.WriteLine(rec.Recompile(programa));
             Console.ReadKey();
         }
     }

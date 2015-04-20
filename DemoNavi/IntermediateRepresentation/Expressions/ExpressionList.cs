@@ -42,7 +42,10 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+            foreach (var expr in this.Exprlist)
+            {
+                expr.SemanticValidation(semanticContext);
+            }
         }
     }
 }

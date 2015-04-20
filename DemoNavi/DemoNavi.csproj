@@ -113,6 +113,7 @@
     <Compile Include="IntermediateRepresentation\Statements\WhileStatement.cs" />
     <Compile Include="IntermediateRepresentation\Statements\IfStatement.cs" />
     <Compile Include="IntermediateRepresentation\Types\ArrayType.cs" />
+    <Compile Include="IntermediateRepresentation\Types\BoolType.cs" />
     <Compile Include="IntermediateRepresentation\Types\CharType.cs" />
     <Compile Include="IntermediateRepresentation\Declarations\DeclarationStatement.cs" />
     <Compile Include="IntermediateRepresentation\Declarations\FunctionDeclaration.cs" />

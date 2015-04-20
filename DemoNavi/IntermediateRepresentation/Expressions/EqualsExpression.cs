@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using DemoNavi.IntermediateRepresentation.Expressions;
+using DemoNavi.IntermediateRepresentation.Types;
 
-namespace DemoNavi.Parser
+namespace DemoNavi.IntermediateRepresentation.Expressions
 {
     class EqualsExpression : BinaryExpression
     {
@@ -21,14 +22,20 @@ namespace DemoNavi.Parser
 
         public override IntermediateRepresentation.Types.IRType GetIRType()
         {
-            throw new NotImplementedException();
+            return new BoolType();
         }
-
-
 
         internal override void SemanticValidation(IntermediateRepresentation.Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+            Left.SemanticValidation(semanticContext);
+            Right.SemanticValidation(semanticContext);
+
+            if (!(Left.GetIRType() is NumericType && Right.GetIRType() is NumericType) || !(Left.GetIRType() == Right.GetIRType()))
+            {
+                throw new Semantic.SemanticValidationException("No se puede asignar");
+
+            }
+
         }
     }
 }
