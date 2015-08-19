@@ -15,19 +15,9 @@ namespace DemoNavi.ConsoleHost
         {
             var parser = new DemoNavi.MyParser();
             string program = @"
-                                struct st {
-                                    int x;
-                                    int y;
-                                };
-int x;
+                               
                                 int main() {
-                                y = x->as.gre[90];
-                                    main();
-                                    main(1);            
-                                    main(1,x,main());
-                                    main(main());
-                                    main(main(),main(),~main());
-
+                          
                                      if(n == true)
                                      {
                                         for(i=0;i<52;i++,j--,h++)
@@ -69,6 +59,9 @@ int add(int a, int b)
 	res = a + b;
 	return res;
 }";
+
+
+            program = @"int main() { int a; a = 1 + 2 ; } ";
 
             parser.Parse(program);
             var programa = parser.Program;

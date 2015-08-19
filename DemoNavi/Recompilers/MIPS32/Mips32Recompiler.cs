@@ -20,17 +20,44 @@ namespace DemoNavi.Recompilers.MIPS32
             WriteBlock(function.Block, programBuilder);
             //restablecer la pila
         }
-        private void WriteExpr(Expression expr, StringBuilder programBuilder) 
+        private string WriteExpr(Expression expr, RegisterFile registerFile, StringBuilder programBuilder) 
         {
             if (expr is DecValue) 
             {
-                programBuilder.AppendFormat("addi $t0, $zero, {0}:", expr.ToString());
+                var register = registerFile.FirstAvailableRegister();
+                programBuilder.AppendFormat("addi {0}, $zero, {1}:", register, expr.ToString());
+                programBuilder.AppendLine();
+                return register;
+
+            }else if (expr is AddExpression)
+            {
+                var add = expr as AddExpression;
+                var leftRegister = WriteExpr(add.Right,registerFile, programBuilder);
+                var register = registerFile.FirstAvailableRegister();
+                programBuilder.AppendFormat("add {0}, {0}, {1}:", register,register, leftRegister);
+                registerFile.FreeRegister(register);
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder);
+                programBuilder.AppendFormat("add $t0, $zero, {0}:", expr.ToString());
+                programBuilder.AppendLine();
+
+            }else if (expr is AdditionAssignmentExpression)
+            {
+                programBuilder.AppendFormat("add $t0, $zero, {0}:", expr.ToString());
+                programBuilder.AppendLine();
+
+            }else if (expr is AssignExpression)
+            {
+                var assign = expr as AssignExpression;
+                WriteExpr(assign.Right, registerFile, programBuilder);
+                programBuilder.AppendFormat("add $t0, $zero, $t0 {0}","//asignación"); //se puede hacer todas estas operaciones en t0?
+               // programBuilder.Append(ExpressionList);
                 programBuilder.AppendLine();
             }
-            else if(expr is FunctionCallExpression)
+            else if (expr is FunctionCallExpression)
             {
                 WriteFunctionCallExp(expr as FunctionCallExpression,programBuilder);
             }
+            
         }   
         private void WriteFunctionCallExp(FunctionCallExpression functioncall, StringBuilder programBuilder)
         {
@@ -47,8 +74,13 @@ namespace DemoNavi.Recompilers.MIPS32
         {
             WriteExpr(returnStatement.ReturnExpression, programBuilder);
             programBuilder.AppendLine("add $v0, $t0, $zero");
-
         }
+        private void WriteExpressionStatemnt(ExpressionStatement expressionStatement, StringBuilder programBuilder) 
+        {
+            WriteExpr(expressionStatement.Expression, programBuilder);
+            
+        }
+
         private void WriteBlock(BlockStatement blockstatement, StringBuilder programBuilder) 
         {
             foreach (Statement statement in blockstatement.StatementList) 
@@ -56,7 +88,13 @@ namespace DemoNavi.Recompilers.MIPS32
                 if(statement is ReturnStatement)
                 {
                     WriteReturnStatement(statement as ReturnStatement, programBuilder);
+
                 }
+                else if (statement is ExpressionStatement) 
+                {
+                    WriteExpressionStatemnt(statement as ExpressionStatement, programBuilder);
+                }
+               
             }
         }
 
@@ -97,7 +135,7 @@ namespace DemoNavi.Recompilers.MIPS32
         }
         private void WriteGlobalVariables(Program program, StringBuilder programBuilder)
         {
-            programBuilder.AppendLine("#todo"); 
+            programBuilder.AppendLine("#Escribir Variables Globales"); 
         }
 
         public override string Recompile(Program program)

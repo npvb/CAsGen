@@ -7,9 +7,15 @@ using System.Threading.Tasks;
 
 namespace DemoNavi.IntermediateRepresentation.Expressions
 {
-    class AssignExpression : BinaryExpression
+   class AssignExpression : BinaryExpression
     {
         private IRType returnType;
+
+        public AssignExpression()
+        {
+         
+        }
+
         public AssignExpression(Expression left, Expression right)
         {
             base.Left = left;
