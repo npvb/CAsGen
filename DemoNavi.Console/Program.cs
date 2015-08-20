@@ -13,61 +13,92 @@ namespace DemoNavi.ConsoleHost
     {
         static void Main(string[] args)
         {
+//            var parser = new DemoNavi.MyParser();
+//            string program = @"
+//                               
+//                                int main() {
+//                          
+//                                     if(n == true)
+//                                     {
+//                                        for(i=0;i<52;i++,j--,h++)
+//                                        {
+//                                            while(i<59)
+//                                            {
+//                                                switch(n)
+//                                                {
+//                                                    case true: return x;
+//                                                    case false: {return y;}
+//                                                    default: return h;
+//                                                }
+//                                                int c = a+b;
+//                                                int c = a&b;
+//                                                int c = a|b;
+//                                                int c = a&&b;
+//                                                int c = a||b;
+//                                                int c = a>>b;
+//                                                int c = a<<b;
+//                                                int c = a*b;
+//                                                int c = a/b;
+//                                                int c = a^b;
+//                                                c = a+=b;
+//                                            }
+//                                        }
+//                                     }
+//    
+//                                     return x;
+//                              }";
+//            program = @"
+//int main()
+//{
+//    return add(10,20);
+//}
+//
+//int add(int a, int b)
+//{
+//	int res;
+//	res = a + b;
+//	return res;
+//}";
+
+
+//            program = @"int main() { a = 1 + 2 + 3 + 4 + 5 + 6; } ";
+
+//            parser.Parse(program);
+//            var programa = parser.Program;
+//            Recompiler rec = new Mips32Recompiler();
+//            Console.WriteLine(rec.Recompile(0, programa));
+            Loop();
+            Console.ReadKey();
+        }
+
+        static string Read()
+        {
+            return string.Format(@"int main() {{ {0} }} ", Console.ReadLine());
+        }
+
+        static string Eval(string program)
+        {
+            
             var parser = new DemoNavi.MyParser();
-            string program = @"
-                               
-                                int main() {
-                          
-                                     if(n == true)
-                                     {
-                                        for(i=0;i<52;i++,j--,h++)
-                                        {
-                                            while(i<59)
-                                            {
-                                                switch(n)
-                                                {
-                                                    case true: return x;
-                                                    case false: {return y;}
-                                                    default: return h;
-                                                }
-                                                int c = a+b;
-                                                int c = a&b;
-                                                int c = a|b;
-                                                int c = a&&b;
-                                                int c = a||b;
-                                                int c = a>>b;
-                                                int c = a<<b;
-                                                int c = a*b;
-                                                int c = a/b;
-                                                int c = a^b;
-                                                c = a+=b;
-                                            }
-                                        }
-                                     }
-    
-                                     return x;
-                              }";
-            program = @"
-int main()
-{
-    return add(10,20);
-}
-
-int add(int a, int b)
-{
-	int res;
-	res = a + b;
-	return res;
-}";
-
-
-            program = @"int main() { int a; a = 1 + 2 ; } ";
-
             parser.Parse(program);
             var programa = parser.Program;
             Recompiler rec = new Mips32Recompiler();
-            Console.WriteLine(rec.Recompile(programa));
-            Console.ReadKey();
+
+            return rec.Recompile(0, programa);
+        }
+
+        static void Print(string program)
+        {
+            Console.WriteLine(program);
+        }
+
+        static void Loop()
+        {
+            while (true)
+            {
+                Print(Eval(Read()));
+
+            }
         }
     }
 }

@@ -10,7 +10,7 @@ namespace DemoNavi.Recompilers.Basic
 {
     public class BasicRecompiler : Recompiler
     {
-        public override string Recompile(Program program)
+        public override string Recompile(int Export, Program program)
         {
             StringBuilder programBuilder = new StringBuilder();
             programBuilder.AppendFormat("Public Class Class1");

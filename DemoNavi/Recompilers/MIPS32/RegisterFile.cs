@@ -11,11 +11,12 @@ namespace DemoNavi.Recompilers.MIPS32
         Dictionary<String, Boolean> registers = new Dictionary<string,bool>();
         public RegisterFile()
         {
-            registers["t0"] = false;
-            registers["t1"] = false;
-            registers["t2"] = false;
-            registers["t3"] = false;
+            registers["$t0"] = false;
+            registers["$t1"] = false;
+            registers["$t2"] = false;
+            registers["$t3"] = false;
         }
+
         public string FirstAvailableRegister()
         {
             foreach (var reg in registers)
@@ -33,5 +34,7 @@ namespace DemoNavi.Recompilers.MIPS32
         {
             registers[register] = false;
         }
+
+       
     }
 }
