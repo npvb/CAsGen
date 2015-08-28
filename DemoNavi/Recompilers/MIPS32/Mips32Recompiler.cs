@@ -337,20 +337,23 @@ namespace DemoNavi.Recompilers.MIPS32
         private void WriteForStatement(ForStatement forStatement, StringBuilder programBuilder)
         {
             WriteExpr(forStatement.Init, registerFile, programBuilder);
-           // programBuilder.AppendFormat("or {0}, $0, {1}", register, register);
-           // programBuilder.AppendFormat("\t\t# {0}", forStatement.Init.ToString());
-           // programBuilder.AppendLine();
             programBuilder.Append("_Loop: ");
             programBuilder.AppendLine();
+            WriteBlock(forStatement.Body as BlockStatement, programBuilder);
+            WriteExpr(forStatement.Loop, registerFile, programBuilder);
             var register = WriteExpr(forStatement.Condition, registerFile, programBuilder);
-            programBuilder.AppendFormat("beq {0}, 0, Loop", register);
+            programBuilder.AppendFormat("bne {0}, 0, _Loop", register);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", forStatement.Condition.ToString());
+            programBuilder.AppendLine();  
+           /* var register = WriteExpr(forStatement.Condition, registerFile, programBuilder);
+            programBuilder.AppendFormat("bne {0}, 0, _Exit", register);
             programBuilder.AppendFormat("\t# Si  {0} es verdadera, termina el ciclo", forStatement.Condition.ToString());
             programBuilder.AppendLine();  
             WriteBlock(forStatement.Body as BlockStatement, programBuilder);
             WriteExpr(forStatement.Loop, registerFile, programBuilder);
             programBuilder.Append("j _Loop");
-            programBuilder.Append("\t\t# Regresa al loop");
-            programBuilder.AppendLine();   
+            programBuilder.Append("\t\t\t# Regresa al loop");
+            programBuilder.AppendLine();   */
             
         }
 
@@ -359,8 +362,8 @@ namespace DemoNavi.Recompilers.MIPS32
             programBuilder.Append("_Loop: ");
             programBuilder.AppendLine();
             var register = WriteExpr(whileStatement.Expressions, registerFile, programBuilder);
-            programBuilder.AppendFormat("beq {0}, 0, Loop", register);
-            programBuilder.AppendFormat("\t# Si  {0} es verdadera, termina el ciclo", whileStatement.Expressions.ToString());
+            programBuilder.AppendFormat("bne {0}, 0, Loop", register);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", whileStatement.Expressions.ToString());
             programBuilder.AppendLine();
             WriteBlock(whileStatement.Statements as BlockStatement, programBuilder);
             programBuilder.Append("j _Loop");
@@ -374,8 +377,8 @@ namespace DemoNavi.Recompilers.MIPS32
             programBuilder.AppendLine();
             WriteBlock(doStatement.Statements as BlockStatement, programBuilder);
             var register = WriteExpr(doStatement.Expressions, registerFile, programBuilder);
-            programBuilder.AppendFormat("beq {0}, 0, Loop", register);
-            programBuilder.AppendFormat("\t# Si  {0} es verdadera, termina el ciclo", doStatement.Expressions.ToString());
+            programBuilder.AppendFormat("bne {0}, 0, Loop", register);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", doStatement.Expressions.ToString());
             programBuilder.AppendLine();
             programBuilder.Append("j _Loop");
             programBuilder.Append("\t\t# Regresa al loop");
