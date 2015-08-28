@@ -22,6 +22,7 @@ namespace DemoNavi.Recompilers.MIPS32
             WriteBlock(function.Block, programBuilder);
             //restablecer la pila
         }
+
         private string WriteExpr(Expression expr, RegisterFile registerFile, StringBuilder programBuilder, string registerToUse = "")
         {
             #region INT_EXPRESSIONS
@@ -29,7 +30,7 @@ namespace DemoNavi.Recompilers.MIPS32
             {
                 var register = registerFile.FirstAvailableRegister();
                 programBuilder.AppendFormat("addi {0}, $zero, {1}", register, expr.ToString());
-                programBuilder.AppendFormat(" # agrega {0} al registro {1}", expr.ToString(), register);
+                programBuilder.AppendFormat("\t# agrega {0} al registro {1}", expr.ToString(), register);
                 programBuilder.AppendLine();
                 return register;
 
@@ -60,39 +61,75 @@ namespace DemoNavi.Recompilers.MIPS32
 
             }else if (expr is SubExpression)
             {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add{0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendLine();
+                }
                 var add = expr as SubExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
-                var register = registerFile.FirstAvailableRegister();
-                registerFile.FreeRegister(register);
-                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder);
-                programBuilder.AppendFormat("sub {0}, {1}, {2}", register, leftRegister, rightRegister);
-                registerFile.FreeRegister(register);
-                registerFile.FreeRegister(rightRegister);
+                var register = registerToUse;
+                programBuilder.AppendFormat("sub {0}, {1}, {2}", register, register, leftRegister);
                 programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("sub {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
 
             }else if (expr is MulExpression)
             {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendLine();
+                }
                 var add = expr as MulExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
-                var register = registerFile.FirstAvailableRegister();
-                registerFile.FreeRegister(register);
-                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder);
-                programBuilder.AppendFormat("mult {0}, {1}, {2}", register, leftRegister, rightRegister); //se hace con los S
-                registerFile.FreeRegister(register);
-                registerFile.FreeRegister(rightRegister);
+                var register = registerToUse;
+                programBuilder.AppendFormat("mult {0}, {1}, {2}", register, register, leftRegister);
                 programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("mult {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
 
             }else if (expr is DivisionExpression)
             {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendLine();
+                }
                 var add = expr as DivisionExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
-                var register = registerFile.FirstAvailableRegister();
-                registerFile.FreeRegister(register);
-                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder);
-                programBuilder.AppendFormat("div {0}, {1}, {2}", register, leftRegister, rightRegister);//se hace con los S
-                registerFile.FreeRegister(register);
-                registerFile.FreeRegister(rightRegister);
+                var register = registerToUse;
+                programBuilder.AppendFormat("div {0}, {1}, {2}", register, register, leftRegister);
                 programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("div {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
 
             }
             #endregion
@@ -100,42 +137,103 @@ namespace DemoNavi.Recompilers.MIPS32
             #region BITWISE_OP_EXPRESSIONS
             else if (expr is BitwiseAndExpression)
             {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendLine();
+                }
                 var add = expr as BitwiseAndExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
-                var register = registerFile.FirstAvailableRegister();
-                registerFile.FreeRegister(register);
-                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder);
-                programBuilder.AppendFormat("and {0}, {1}, {2}", register, leftRegister, rightRegister);
-                registerFile.FreeRegister(register);
-                registerFile.FreeRegister(rightRegister);
+                var register = registerToUse;
+                programBuilder.AppendFormat("and {0}, {1}, {2}", register, register, leftRegister);
                 programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("and {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
 
             }
             else if (expr is BitwiseOrExpression)
             {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add{0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendLine();
+                }
                 var add = expr as BitwiseOrExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
-                var register = registerFile.FirstAvailableRegister();
-                registerFile.FreeRegister(register);
-                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder);
-                programBuilder.AppendFormat("or {0}, {1}, {2}", register, leftRegister, rightRegister);
-                registerFile.FreeRegister(register);
-                registerFile.FreeRegister(rightRegister);
+                var register = registerToUse;
+                programBuilder.AppendFormat("or {0}, {1}, {2}", register, register, leftRegister);
                 programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("or {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
 
             }
             else if (expr is BitwiseXorExpression)
             {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendLine();
+                }
                 var add = expr as BitwiseXorExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
-                var register = registerFile.FirstAvailableRegister();
-                registerFile.FreeRegister(register);
-                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder);
-                programBuilder.AppendFormat("xor {0}, {1}, {2}", register, leftRegister, rightRegister);
-                registerFile.FreeRegister(register);
-                registerFile.FreeRegister(rightRegister);
+                var register = registerToUse;
+                programBuilder.AppendFormat("xor {0}, {1}, {2}", register, register, leftRegister);
                 programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
 
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("xor {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
+
+            }
+            else if (expr is LessThanExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendLine();
+                }
+                var slt = expr as LessThanExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("slt {0}, {1}, {2}",register, register, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Right.ToString(), slt.Left.ToString());
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("slt {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
             }
             #endregion
 
@@ -147,47 +245,144 @@ namespace DemoNavi.Recompilers.MIPS32
                 programBuilder.AppendFormat("add $t0, $zero, {0}", leftRegister);
                 programBuilder.AppendLine();
 
-            }else if (expr is AssignExpression)
+            }
+            else if (expr is AssignExpression)
             {
                 var assign = expr as AssignExpression;
                 var assignRegister = WriteExpr(assign.Right, registerFile, programBuilder);
-                programBuilder.AppendFormat("add $s0, $zero, {0}", assignRegister); //se puede hacer todas estas operaciones en t0?
-                programBuilder.AppendFormat(" # Asigna el resultado de {0} a $t0.", expr.ToString());
+                programBuilder.AppendFormat("add $t0, $zero, {0}", assignRegister); //se puede hacer todas estas operaciones en t0?
+                programBuilder.AppendFormat("\t# Asigna el resultado de {0} a $t0.", expr.ToString());
                 programBuilder.AppendLine();
+                return assignRegister;
+            }
+            #endregion
+
+            #region POST_PRE_INCREMENT_DECREMENT
+            else if (expr is PostIncrementExpression)
+            {
+                var postIncrement = expr as PostIncrementExpression;
+                var register = registerFile.FirstUsedRegister();
+                programBuilder.AppendFormat("add {0}, {1}, 1", register, register);
+                programBuilder.AppendFormat("\t\t# {0}", expr.ToString());
+                programBuilder.AppendLine();
+                return register;
             }
             #endregion
 
             #region FUNTIONCALL_EXPRESSION
             else if (expr is FunctionCallExpression)
             {
-                WriteFunctionCallExp(expr as FunctionCallExpression,programBuilder);
+                WriteFunctionCallExp(expr as FunctionCallExpression, programBuilder);
             }
             #endregion
 
             return registerFile.FirstAvailableRegister();
-        }   
+        }
+
+        #region WriteStatements
         private void WriteFunctionCallExp(FunctionCallExpression functioncall, StringBuilder programBuilder)
         {
             for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
             {
                 programBuilder.AppendFormat("add $a0,$a0, {0}", GetTypeSizeInBytes(functioncall.FunctionDeclaration.Parameters[i].Type));
                 programBuilder.AppendLine();
-                WriteExpr(functioncall.Parameters.Exprlist[i],registerFile, programBuilder);
-                programBuilder.AppendLine("sw $t0,($a0)");
+                var register = WriteExpr(functioncall.Parameters.Exprlist[i],registerFile, programBuilder);
+                programBuilder.AppendFormat("sw {0},($a0)", register);
             }
             
         }
+    
         private void WriteReturnStatement(ReturnStatement returnStatement, StringBuilder programBuilder) 
         {
             WriteExpr(returnStatement.ReturnExpression, registerFile, programBuilder);
             programBuilder.AppendLine("add $v0, $t0, $zero");
         }
+
         private void WriteExpressionStatemnt(ExpressionStatement expressionStatement, StringBuilder programBuilder) 
         {
-            RegisterFile registerFile = new RegisterFile();
-            WriteExpr(expressionStatement.Expression, registerFile, programBuilder);
+            WriteExpr(expressionStatement.Expression, registerFile, programBuilder);         
+        }
+
+        private void WriteIdDeclarationStatement(IdDeclarationStatement idDeclarationStatement, StringBuilder programBuilder)
+        {
+            WriteExpr(idDeclarationStatement.InitializationExpression, registerFile, programBuilder); 
+        }
+
+        private void WriteIFStatement(IfStatement ifStatement, StringBuilder programBuilder)
+        {
+            var register = WriteExpr(ifStatement.Expressions, registerFile, programBuilder);
+
+            if (ifStatement.IfFalse != null)
+            {
+                programBuilder.AppendFormat("beq {0}, $0, _ELSE", register);
+                programBuilder.Append("\t# if FALSO goto ELSE");
+                programBuilder.AppendLine();
+                programBuilder.Append("_ELSE: ");
+                programBuilder.AppendLine();
+
+                WriteBlock(ifStatement.IfFalse as BlockStatement, programBuilder);
+            }
+            else
+            {
+               WriteBlock(ifStatement.Statements as BlockStatement, programBuilder);
+ 
+            }
+
+            programBuilder.Append("j _EndIf");
+            programBuilder.Append("\t# salta al label _EndIf para finalizar IF");
+            programBuilder.AppendLine();
+            programBuilder.Append("_EndIf:");
+        }
+
+        private void WriteForStatement(ForStatement forStatement, StringBuilder programBuilder)
+        {
+            WriteExpr(forStatement.Init, registerFile, programBuilder);
+           // programBuilder.AppendFormat("or {0}, $0, {1}", register, register);
+           // programBuilder.AppendFormat("\t\t# {0}", forStatement.Init.ToString());
+           // programBuilder.AppendLine();
+            programBuilder.Append("_Loop: ");
+            programBuilder.AppendLine();
+            var register = WriteExpr(forStatement.Condition, registerFile, programBuilder);
+            programBuilder.AppendFormat("beq {0}, 0, Loop", register);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, termina el ciclo", forStatement.Condition.ToString());
+            programBuilder.AppendLine();  
+            WriteBlock(forStatement.Body as BlockStatement, programBuilder);
+            WriteExpr(forStatement.Loop, registerFile, programBuilder);
+            programBuilder.Append("j _Loop");
+            programBuilder.Append("\t\t# Regresa al loop");
+            programBuilder.AppendLine();   
             
         }
+
+        private void WriteWhileStatement(WhileStatement whileStatement, StringBuilder programBuilder)
+        {
+            programBuilder.Append("_Loop: ");
+            programBuilder.AppendLine();
+            var register = WriteExpr(whileStatement.Expressions, registerFile, programBuilder);
+            programBuilder.AppendFormat("beq {0}, 0, Loop", register);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, termina el ciclo", whileStatement.Expressions.ToString());
+            programBuilder.AppendLine();
+            WriteBlock(whileStatement.Statements as BlockStatement, programBuilder);
+            programBuilder.Append("j _Loop");
+            programBuilder.Append("\t\t# Regresa al loop");
+            programBuilder.AppendLine();
+        }
+
+        private void WriteDoStatement(DoStatement doStatement, StringBuilder programBuilder)
+        {
+            programBuilder.Append("_Loop: ");
+            programBuilder.AppendLine();
+            WriteBlock(doStatement.Statements as BlockStatement, programBuilder);
+            var register = WriteExpr(doStatement.Expressions, registerFile, programBuilder);
+            programBuilder.AppendFormat("beq {0}, 0, Loop", register);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, termina el ciclo", doStatement.Expressions.ToString());
+            programBuilder.AppendLine();
+            programBuilder.Append("j _Loop");
+            programBuilder.Append("\t\t# Regresa al loop");
+            programBuilder.AppendLine();
+        }
+
+        #endregion
 
         private void WriteBlock(BlockStatement blockstatement, StringBuilder programBuilder) 
         {
@@ -202,11 +397,31 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     WriteExpressionStatemnt(statement as ExpressionStatement, programBuilder);
                 }
-               
+                else if (statement is IdDeclarationStatement)
+                {
+                    WriteIdDeclarationStatement(statement as IdDeclarationStatement, programBuilder);
+                }
+                else if (statement is IfStatement) 
+                {
+                    WriteIFStatement(statement as IfStatement, programBuilder);
+                }
+                else if (statement is ForStatement) 
+                {
+                    WriteForStatement(statement as ForStatement, programBuilder);
+                }
+                else if(statement is WhileStatement)
+                {
+                    WriteWhileStatement(statement as WhileStatement, programBuilder);
+                }
+                else if (statement is DoStatement) 
+                {
+                    WriteDoStatement(statement as DoStatement, programBuilder);
+                }
             }
         }
-
-        #region EXPORT_MARS
+      
+       
+        #region EXPORT_TO_MARS
         private string GenerateLabel(FunctionDeclaration function) 
         {
             return "_" + function.Id + string.Join("_",function.Parameters.Select(p => p.Type.ToString()));  

@@ -9,15 +9,15 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 {
     class LessThanExpression : BinaryExpression
     {
-        private IntermediateRepresentation.Expression left;
-        private IntermediateRepresentation.Expression right;
+        /*public IntermediateRepresentation.Expression left;
+        public IntermediateRepresentation.Expression right;*/
         private IRType returnType;
 
         public LessThanExpression(IntermediateRepresentation.Expression left, IntermediateRepresentation.Expression right)
         {
             // TODO: Complete member initialization
-            this.left = left;
-            this.right = right;
+            this.Left = left;
+            this.Right = right;
         }
 
         public override string ToString()
@@ -32,7 +32,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            Left.SemanticValidation(semanticContext);
+           /* Left.SemanticValidation(semanticContext);
             Right.SemanticValidation(semanticContext);
 
             if (!(Left.GetIRType() is NumericType && Right.GetIRType() is NumericType) || !(Left.GetIRType() == Right.GetIRType()))
@@ -42,7 +42,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
             else
             {
                 returnType = new BoolType(); //evaluar cual tipo de podría asignar dependiendo de su tamanio
-            }
+            }*/
         }
     }
 }

@@ -28,13 +28,13 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            Expression.SemanticValidation(semanticContext);
+           /* Expression.SemanticValidation(semanticContext);
             if (!(Expression.GetIRType() is NumericType))
             {
                 throw new Semantic.SemanticValidationException("No se puede PostIncrement");
             }
             else
-                returnType = new IntType();
+                returnType = new IntType();*/
         }
     }
 }

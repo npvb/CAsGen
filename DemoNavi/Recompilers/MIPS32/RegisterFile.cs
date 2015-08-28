@@ -27,7 +27,19 @@ namespace DemoNavi.Recompilers.MIPS32
                     return reg.Key;
                 }
             }
-            throw new Exception("FirstAvailableRegister sin registro");
+            throw new Exception("FirstAvailableRegister()-> Sin registro Temporales Disponibles");
+        }
+
+        public string FirstUsedRegister()
+        {
+            foreach (var reg in registers)
+            {
+                if (reg.Value == true)
+                {
+                    return reg.Key;
+                }
+            }
+            throw new Exception("FirstUsedRegister()->Todos los Registros sin Usar");
         }
 
         internal void FreeRegister(string register)

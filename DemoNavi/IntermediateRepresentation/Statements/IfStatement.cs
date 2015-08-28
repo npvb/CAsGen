@@ -12,6 +12,7 @@ namespace DemoNavi.IntermediateRepresentation.Statements
         public Statement Statements { get; set; }
         public Expression Expressions { get; set; }
         public Statement IfFalse{ get; set; }
+
         public IfStatement(Expression expresion, Statement statement)
         {
             this.Expressions = expresion;
@@ -36,7 +37,8 @@ namespace DemoNavi.IntermediateRepresentation.Statements
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+         //   throw new NotImplementedException();
         }
+
     }
 }
