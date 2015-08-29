@@ -75,7 +75,7 @@ namespace DemoNavi.ConsoleHost
                      Console.Write("1 ---- (Expression) o 2 ---- (Statement):   ");
                      if (Console.ReadLine() == "1")
                      {
-                         return string.Format(@"int main() {{ {0} }} ", Console.ReadLine());
+                         return string.Format(@"int default_main() {{ {0} }} ", Console.ReadLine());
                      }
                      return string.Format(@"{0}", Console.ReadLine());
                  }

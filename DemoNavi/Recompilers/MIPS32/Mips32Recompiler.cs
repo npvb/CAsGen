@@ -14,14 +14,194 @@ namespace DemoNavi.Recompilers.MIPS32
     {
         RegisterFile registerFile = new RegisterFile();
 
+        public override string Recompile(int export, Program program)
+        {
+            StringBuilder programBuilder = new StringBuilder();
+
+            if (export == 1)
+            {
+                WriteDataHeader(program, programBuilder);
+                WriteGlobalVariables(program, programBuilder);
+                WriteTextHeader(program, programBuilder);
+            }
+
+            WriteFunctions(program.Declarations.OfType<FunctionDeclaration>(), programBuilder);
+            return programBuilder.ToString();
+        }
+
+        private void WriteFunctions(IEnumerable<FunctionDeclaration> functions, StringBuilder programBuilder)
+        {
+            foreach (var function in functions)
+            {
+                WriteFunction(function, programBuilder);
+            }
+        }
+
+        #region Functions
         private void WriteFunction(FunctionDeclaration function, StringBuilder programBuilder)
         {
             programBuilder.AppendFormat("{0}:", GenerateLabel(function));
             programBuilder.AppendLine();
             //reservar espacio en la pila
-            WriteBlock(function.Block, programBuilder);
-            //restablecer la pila
+            if (GenerateLabel(function) != "_default_main")
+            {
+                programBuilder.AppendFormat("add $sp, #sp, -{0}", function.Parameters.Count() * 2);
+                programBuilder.Append("\t# Reserva el espacio de memoria en pila. ");
+                programBuilder.AppendLine();
+                programBuilder.Append("sw $t0, 0($sp)");
+                programBuilder.Append("\t\t# Guarda el espacio de memoria en pila. ");
+                programBuilder.AppendLine();
+                WriteBlock(function.Block, programBuilder);
+                //restablecer la pila
+                programBuilder.Append("lw $t0, 0($sp)");
+                programBuilder.Append("\t\t# Carga el valor anterior de los parametros. ");
+                programBuilder.AppendLine();
+                programBuilder.AppendFormat("add $sp, #sp, {0}", function.Parameters.Count() * 2);
+                programBuilder.Append("\t# Restablece la pila.");
+                programBuilder.AppendLine();
+                programBuilder.Append("jr $ra");
+            }
+            else 
+            {
+                WriteBlock(function.Block, programBuilder);
+            }
         }
+
+        private void WriteFunctionCallExp(FunctionCallExpression functioncall, StringBuilder programBuilder)
+        {
+            for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
+            {
+                programBuilder.AppendFormat("add $a0,$a0, {0}", GetTypeSizeInBytes(functioncall.FunctionDeclaration.Parameters[i].Type));
+                programBuilder.AppendLine();
+                var register = WriteExpr(functioncall.Parameters.Exprlist[i], registerFile, programBuilder);
+                programBuilder.AppendFormat("sw {0},($a0)", register);
+            }
+
+        }
+        #endregion  
+       
+        private void WriteBlock(BlockStatement blockstatement, StringBuilder programBuilder)
+        {
+            foreach (Statement statement in blockstatement.StatementList)
+            {
+                if (statement is ReturnStatement)
+                {
+                    WriteReturnStatement(statement as ReturnStatement, programBuilder);
+                }
+                else if (statement is ExpressionStatement)
+                {
+                    WriteExpressionStatemnt(statement as ExpressionStatement, programBuilder);
+                }
+                else if (statement is IdDeclarationStatement)
+                {
+                    WriteIdDeclarationStatement(statement as IdDeclarationStatement, programBuilder);
+                }
+                else if (statement is IfStatement)
+                {
+                    WriteIFStatement(statement as IfStatement, programBuilder);
+                }
+                else if (statement is ForStatement)
+                {
+                    WriteForStatement(statement as ForStatement, programBuilder);
+                }
+                else if (statement is WhileStatement)
+                {
+                    WriteWhileStatement(statement as WhileStatement, programBuilder);
+                }
+                else if (statement is DoStatement)
+                {
+                    WriteDoStatement(statement as DoStatement, programBuilder);
+                }
+            }
+        }
+
+        #region WriteStatements
+
+        private void WriteReturnStatement(ReturnStatement returnStatement, StringBuilder programBuilder)
+        {
+            WriteExpr(returnStatement.ReturnExpression, registerFile, programBuilder);
+            programBuilder.AppendLine("add $v0, $t0, $zero");
+        }
+
+        private void WriteExpressionStatemnt(ExpressionStatement expressionStatement, StringBuilder programBuilder)
+        {
+            WriteExpr(expressionStatement.Expression, registerFile, programBuilder);
+        }
+
+        private void WriteIdDeclarationStatement(IdDeclarationStatement idDeclarationStatement, StringBuilder programBuilder)
+        {
+            WriteExpr(idDeclarationStatement.InitializationExpression, registerFile, programBuilder);
+        }
+
+        private void WriteIFStatement(IfStatement ifStatement, StringBuilder programBuilder)
+        {
+            var register = WriteExpr(ifStatement.Expressions, registerFile, programBuilder);
+
+            if (ifStatement.IfFalse != null)
+            {
+                programBuilder.AppendFormat("beq {0}, $0, _ELSE", register);
+                programBuilder.Append("\t# if FALSO goto ELSE");
+                programBuilder.AppendLine();
+                programBuilder.Append("_ELSE: ");
+                programBuilder.AppendLine();
+
+                WriteBlock(ifStatement.IfFalse as BlockStatement, programBuilder);
+            }
+            else
+            {
+                WriteBlock(ifStatement.Statements as BlockStatement, programBuilder);
+
+            }
+
+            programBuilder.Append("j _EndIf");
+            programBuilder.Append("\t\t# Salta al label _EndIf para finalizar IF");
+            programBuilder.AppendLine();
+            programBuilder.Append("_EndIf:");
+        }
+
+        private void WriteForStatement(ForStatement forStatement, StringBuilder programBuilder)
+        {
+            var register = WriteExpr(forStatement.Init, registerFile, programBuilder);
+            programBuilder.Append("_Loop: ");
+            programBuilder.AppendLine();
+            WriteBlock(forStatement.Body as BlockStatement, programBuilder);
+            WriteExpr(forStatement.Loop, registerFile, programBuilder);
+            var conditionRegister = WriteExpr(forStatement.Condition, registerFile, programBuilder);
+            programBuilder.AppendFormat("bne {0}, {1}, _Loop", register, conditionRegister);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", forStatement.Condition.ToString());
+            programBuilder.AppendLine();
+
+        }
+
+        private void WriteWhileStatement(WhileStatement whileStatement, StringBuilder programBuilder)
+        {
+            programBuilder.Append("_Loop: ");
+            programBuilder.AppendLine();
+            var register = WriteExpr(whileStatement.Expressions, registerFile, programBuilder);
+            programBuilder.AppendFormat("bne {0}, 0, Loop", register);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", whileStatement.Expressions.ToString());
+            programBuilder.AppendLine();
+            WriteBlock(whileStatement.Statements as BlockStatement, programBuilder);
+            programBuilder.Append("j _Loop");
+            programBuilder.Append("\t\t\t# Regresa al loop");
+            programBuilder.AppendLine();
+        }
+
+        private void WriteDoStatement(DoStatement doStatement, StringBuilder programBuilder)
+        {
+            programBuilder.Append("_Loop: ");
+            programBuilder.AppendLine();
+            WriteBlock(doStatement.Statements as BlockStatement, programBuilder);
+            var register = WriteExpr(doStatement.Expressions, registerFile, programBuilder);
+            programBuilder.AppendFormat("bne {0}, 0, Loop", register);
+            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", doStatement.Expressions.ToString());
+            programBuilder.AppendLine();
+            programBuilder.Append("j _Loop");
+            programBuilder.Append("\t\t# Regresa al loop");
+            programBuilder.AppendLine();
+        }
+
+        #endregion
 
         private string WriteExpr(Expression expr, RegisterFile registerFile, StringBuilder programBuilder, string registerToUse = "")
         {
@@ -30,7 +210,7 @@ namespace DemoNavi.Recompilers.MIPS32
             {
                 var register = registerFile.FirstAvailableRegister();
                 programBuilder.AppendFormat("addi {0}, $zero, {1}", register, expr.ToString());
-                programBuilder.AppendFormat("\t# agrega {0} al registro {1}", expr.ToString(), register);
+                programBuilder.AppendFormat("\t# Agrega {0} al registro {1}", expr.ToString(), register);
                 programBuilder.AppendLine();
                 return register;
 
@@ -41,12 +221,14 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0",registerToUse);
                     programBuilder.AppendLine();
                 }
                 var add = expr as AddExpression;
                 var leftRegister = WriteExpr(add.Right,registerFile, programBuilder);
                 var register = registerToUse;
                 programBuilder.AppendFormat("add {0}, {1}, {2}", register, register, leftRegister);
+                programBuilder.AppendFormat("\t# {0} + {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
                 
@@ -54,6 +236,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 if (register != rightRegister)
                 {
                     programBuilder.AppendFormat("add {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendFormat("\t# {0} + {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
                 }
@@ -65,6 +248,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add{0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
                 var add = expr as SubExpression;
@@ -89,6 +273,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
                 var add = expr as MulExpression;
@@ -113,6 +298,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
                 var add = expr as DivisionExpression;
@@ -141,6 +327,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
                 var add = expr as BitwiseAndExpression;
@@ -166,6 +353,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add{0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
                 var add = expr as BitwiseOrExpression;
@@ -191,6 +379,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
                 var add = expr as BitwiseXorExpression;
@@ -216,13 +405,14 @@ namespace DemoNavi.Recompilers.MIPS32
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
                 var slt = expr as LessThanExpression;
                 var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
                 var register = registerToUse;
                 programBuilder.AppendFormat("slt {0}, {1}, {2}",register, register, leftRegister);
-                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Right.ToString(), slt.Left.ToString());
+                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(),slt.Right.ToString());
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
 
@@ -243,6 +433,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 var add = expr as AdditionAssignmentExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 programBuilder.AppendFormat("add $t0, $zero, {0}", leftRegister);
+                programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", leftRegister);
                 programBuilder.AppendLine();
 
             }
@@ -250,8 +441,8 @@ namespace DemoNavi.Recompilers.MIPS32
             {
                 var assign = expr as AssignExpression;
                 var assignRegister = WriteExpr(assign.Right, registerFile, programBuilder);
-                programBuilder.AppendFormat("add $t0, $zero, {0}", assignRegister); //se puede hacer todas estas operaciones en t0?
-                programBuilder.AppendFormat("\t# Asigna el resultado de {0} a $t0.", expr.ToString());
+                programBuilder.AppendFormat("add $t0, $zero, {0}", assignRegister); 
+                programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", assignRegister);
                 programBuilder.AppendLine();
                 return assignRegister;
             }
@@ -262,8 +453,35 @@ namespace DemoNavi.Recompilers.MIPS32
             {
                 var postIncrement = expr as PostIncrementExpression;
                 var register = registerFile.FirstUsedRegister();
-                programBuilder.AppendFormat("add {0}, {1}, 1", register, register);
-                programBuilder.AppendFormat("\t\t# {0}", expr.ToString());
+                programBuilder.AppendFormat("addi {0}, {1}, 1", register, register);
+                programBuilder.AppendFormat("\t# {0}", expr.ToString());
+                programBuilder.AppendLine();
+                return register;
+            }
+            else if (expr is PreIncrementExpression)
+            {
+                var postIncrement = expr as PreIncrementExpression;
+                var register = registerFile.FirstUsedRegister();
+                programBuilder.AppendFormat("addi {0}, {1}, 1", register, register);
+                programBuilder.AppendFormat("\t# {0}", expr.ToString());
+                programBuilder.AppendLine();
+                return register;
+            }
+            else if (expr is PostDecrementExpression)
+            {
+                var postIncrement = expr as PostDecrementExpression;
+                var register = registerFile.FirstUsedRegister();
+                programBuilder.AppendFormat("subi {0}, {1}, 1", register, register);
+                programBuilder.AppendFormat("\t# {0}", expr.ToString());
+                programBuilder.AppendLine();
+                return register;
+            }
+            else if (expr is PreDecrementExpression)
+            {
+                var postIncrement = expr as PreDecrementExpression;
+                var register = registerFile.FirstUsedRegister();
+                programBuilder.AppendFormat("subi {0}, {1}, 1", register, register);
+                programBuilder.AppendFormat("\t# {0}", expr.ToString());
                 programBuilder.AppendLine();
                 return register;
             }
@@ -279,151 +497,6 @@ namespace DemoNavi.Recompilers.MIPS32
             return registerFile.FirstAvailableRegister();
         }
 
-        #region WriteStatements
-        private void WriteFunctionCallExp(FunctionCallExpression functioncall, StringBuilder programBuilder)
-        {
-            for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
-            {
-                programBuilder.AppendFormat("add $a0,$a0, {0}", GetTypeSizeInBytes(functioncall.FunctionDeclaration.Parameters[i].Type));
-                programBuilder.AppendLine();
-                var register = WriteExpr(functioncall.Parameters.Exprlist[i],registerFile, programBuilder);
-                programBuilder.AppendFormat("sw {0},($a0)", register);
-            }
-            
-        }
-    
-        private void WriteReturnStatement(ReturnStatement returnStatement, StringBuilder programBuilder) 
-        {
-            WriteExpr(returnStatement.ReturnExpression, registerFile, programBuilder);
-            programBuilder.AppendLine("add $v0, $t0, $zero");
-        }
-
-        private void WriteExpressionStatemnt(ExpressionStatement expressionStatement, StringBuilder programBuilder) 
-        {
-            WriteExpr(expressionStatement.Expression, registerFile, programBuilder);         
-        }
-
-        private void WriteIdDeclarationStatement(IdDeclarationStatement idDeclarationStatement, StringBuilder programBuilder)
-        {
-            WriteExpr(idDeclarationStatement.InitializationExpression, registerFile, programBuilder); 
-        }
-
-        private void WriteIFStatement(IfStatement ifStatement, StringBuilder programBuilder)
-        {
-            var register = WriteExpr(ifStatement.Expressions, registerFile, programBuilder);
-
-            if (ifStatement.IfFalse != null)
-            {
-                programBuilder.AppendFormat("beq {0}, $0, _ELSE", register);
-                programBuilder.Append("\t# if FALSO goto ELSE");
-                programBuilder.AppendLine();
-                programBuilder.Append("_ELSE: ");
-                programBuilder.AppendLine();
-
-                WriteBlock(ifStatement.IfFalse as BlockStatement, programBuilder);
-            }
-            else
-            {
-               WriteBlock(ifStatement.Statements as BlockStatement, programBuilder);
- 
-            }
-
-            programBuilder.Append("j _EndIf");
-            programBuilder.Append("\t# salta al label _EndIf para finalizar IF");
-            programBuilder.AppendLine();
-            programBuilder.Append("_EndIf:");
-        }
-
-        private void WriteForStatement(ForStatement forStatement, StringBuilder programBuilder)
-        {
-            WriteExpr(forStatement.Init, registerFile, programBuilder);
-            programBuilder.Append("_Loop: ");
-            programBuilder.AppendLine();
-            WriteBlock(forStatement.Body as BlockStatement, programBuilder);
-            WriteExpr(forStatement.Loop, registerFile, programBuilder);
-            var register = WriteExpr(forStatement.Condition, registerFile, programBuilder);
-            programBuilder.AppendFormat("bne {0}, 0, _Loop", register);
-            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", forStatement.Condition.ToString());
-            programBuilder.AppendLine();  
-           /* var register = WriteExpr(forStatement.Condition, registerFile, programBuilder);
-            programBuilder.AppendFormat("bne {0}, 0, _Exit", register);
-            programBuilder.AppendFormat("\t# Si  {0} es verdadera, termina el ciclo", forStatement.Condition.ToString());
-            programBuilder.AppendLine();  
-            WriteBlock(forStatement.Body as BlockStatement, programBuilder);
-            WriteExpr(forStatement.Loop, registerFile, programBuilder);
-            programBuilder.Append("j _Loop");
-            programBuilder.Append("\t\t\t# Regresa al loop");
-            programBuilder.AppendLine();   */
-            
-        }
-
-        private void WriteWhileStatement(WhileStatement whileStatement, StringBuilder programBuilder)
-        {
-            programBuilder.Append("_Loop: ");
-            programBuilder.AppendLine();
-            var register = WriteExpr(whileStatement.Expressions, registerFile, programBuilder);
-            programBuilder.AppendFormat("bne {0}, 0, Loop", register);
-            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", whileStatement.Expressions.ToString());
-            programBuilder.AppendLine();
-            WriteBlock(whileStatement.Statements as BlockStatement, programBuilder);
-            programBuilder.Append("j _Loop");
-            programBuilder.Append("\t\t# Regresa al loop");
-            programBuilder.AppendLine();
-        }
-
-        private void WriteDoStatement(DoStatement doStatement, StringBuilder programBuilder)
-        {
-            programBuilder.Append("_Loop: ");
-            programBuilder.AppendLine();
-            WriteBlock(doStatement.Statements as BlockStatement, programBuilder);
-            var register = WriteExpr(doStatement.Expressions, registerFile, programBuilder);
-            programBuilder.AppendFormat("bne {0}, 0, Loop", register);
-            programBuilder.AppendFormat("\t# Si  {0} es verdadera, sigue el ciclo", doStatement.Expressions.ToString());
-            programBuilder.AppendLine();
-            programBuilder.Append("j _Loop");
-            programBuilder.Append("\t\t# Regresa al loop");
-            programBuilder.AppendLine();
-        }
-
-        #endregion
-
-        private void WriteBlock(BlockStatement blockstatement, StringBuilder programBuilder) 
-        {
-            foreach (Statement statement in blockstatement.StatementList) 
-            {
-                if(statement is ReturnStatement)
-                {
-                    WriteReturnStatement(statement as ReturnStatement, programBuilder);
-
-                }
-                else if (statement is ExpressionStatement) 
-                {
-                    WriteExpressionStatemnt(statement as ExpressionStatement, programBuilder);
-                }
-                else if (statement is IdDeclarationStatement)
-                {
-                    WriteIdDeclarationStatement(statement as IdDeclarationStatement, programBuilder);
-                }
-                else if (statement is IfStatement) 
-                {
-                    WriteIFStatement(statement as IfStatement, programBuilder);
-                }
-                else if (statement is ForStatement) 
-                {
-                    WriteForStatement(statement as ForStatement, programBuilder);
-                }
-                else if(statement is WhileStatement)
-                {
-                    WriteWhileStatement(statement as WhileStatement, programBuilder);
-                }
-                else if (statement is DoStatement) 
-                {
-                    WriteDoStatement(statement as DoStatement, programBuilder);
-                }
-            }
-        }
-      
-       
         #region EXPORT_TO_MARS
         private string GenerateLabel(FunctionDeclaration function) 
         {
@@ -466,27 +539,7 @@ namespace DemoNavi.Recompilers.MIPS32
         }
         #endregion
 
-        public override string Recompile(int export, Program program)
-        {
-            StringBuilder programBuilder = new StringBuilder();
-
-            if (export == 1)
-            {
-                WriteDataHeader(program, programBuilder);
-                WriteGlobalVariables(program, programBuilder);
-                WriteTextHeader(program, programBuilder);
-            }
-               
-            WriteFunctions(program.Declarations.OfType<FunctionDeclaration>(), programBuilder);
-            return programBuilder.ToString();
-        }
-
-        private void WriteFunctions(IEnumerable<FunctionDeclaration> functions, StringBuilder programBuilder)
-        {
-            foreach (var function in functions)
-            {
-                WriteFunction(function,programBuilder);
-            }
-        }
+        
+        
     }
 }

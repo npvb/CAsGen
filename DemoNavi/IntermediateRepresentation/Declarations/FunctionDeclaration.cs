@@ -57,7 +57,7 @@ namespace DemoNavi.IntermediateRepresentation
 
         internal override void SemanticValidation(SemanticContext semanticContext)
         {
-            bool multiMatch =  semanticContext.FunctionDeclarations.Where(f =>
+            /*bool multiMatch =  semanticContext.FunctionDeclarations.Where(f =>
             {
                 bool match = true;
                 match = f.Id == this.Id && f.Parameters.Count == this.Parameters.Count;
@@ -77,7 +77,7 @@ namespace DemoNavi.IntermediateRepresentation
             {
                 throw new SemanticValidationException("Ambiguous Type of Function Definition: " + id);
             }
-            Block.SemanticValidation(semanticContext);
+            Block.SemanticValidation(semanticContext);*/
         }
     }
 }

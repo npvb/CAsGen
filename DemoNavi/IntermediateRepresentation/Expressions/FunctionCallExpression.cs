@@ -11,6 +11,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
         public FunctionDeclaration FunctionDeclaration { get; set; }
         public ExpressionList Parameters { get; set; }
         public string Id { get; set; }
+
         public FunctionCallExpression(string id, Expression expr) : this(id)
         {
             this.Id = id;
@@ -40,7 +41,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            this.FunctionDeclaration = semanticContext.FunctionDeclarations.Where(f => {
+            /*this.FunctionDeclaration = semanticContext.FunctionDeclarations.Where(f => {
                 bool match = true;
                 match = f.Id == this.Id && f.Parameters.Count == this.Parameters.Exprlist.Count;
                 if ( match )
@@ -53,7 +54,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
                     }
                 }
                 return match;
-            }).First();
+            }).First();*/
 
         }
 

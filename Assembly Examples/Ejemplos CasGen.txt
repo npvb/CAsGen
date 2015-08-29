@@ -1,0 +1,4 @@
+int default_main (){ for(i=0;i<100; i++){int sum = 1+2;}}
+int default_main(){if(1<2){int a = 2+3;}else{int b = 4+5;}}
+int answer(){res(10,20);} int add(int a, int b){int res; res = a + b;return res;}
+int default_main(){while(1<2){int a = 9+1;}}
