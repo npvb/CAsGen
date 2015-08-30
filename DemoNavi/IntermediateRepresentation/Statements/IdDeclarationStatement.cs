@@ -33,10 +33,10 @@ namespace DemoNavi.IntermediateRepresentation
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            if ( semanticContext.IdExistInSameScope(this.Id))
+           /* if ( semanticContext.IdExistInSameScope(this.Id))
             {
                 throw new Semantic.SemanticValidationException("Redefinición de id en el mismo alcance: " + this.Id);
-            }
+            }*/
             
         }
     }

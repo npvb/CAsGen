@@ -47,5 +47,6 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
                 expr.SemanticValidation(semanticContext);
             }
         }
+
     }
 }

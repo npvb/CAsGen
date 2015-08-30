@@ -9,6 +9,9 @@ namespace DemoNavi.Recompilers.MIPS32
     class RegisterFile
     {
         Dictionary<String, Boolean> registers = new Dictionary<string,bool>();
+        Dictionary<String, Boolean> argumentRegisters = new Dictionary<string, bool>();
+
+        #region Registers
         public RegisterFile()
         {
             registers["$t0"] = false;
@@ -47,6 +50,37 @@ namespace DemoNavi.Recompilers.MIPS32
             registers[register] = false;
         }
 
-       
+        #endregion
+
+        #region Arguments
+
+        public RegisterFile(string arguments)
+        {
+            argumentRegisters["$a0"] = false;
+            argumentRegisters["$a1"] = false;
+            argumentRegisters["$a2"] = false;
+            argumentRegisters["$a3"] = false;
+        }
+
+        public string FirstAvailableArgument()
+        {
+            foreach (var arg in argumentRegisters)
+            {
+                if (arg.Value == false)
+                {
+                    registers[arg.Key] = true;
+                    return arg.Key;
+                }
+            }
+            throw new Exception("FirstAvailableArgument()()-> Sin argumentos Disponibles");
+        }
+
+        internal void FreeArgument(string argument)
+        {
+            argumentRegisters[argument] = false;
+        }
+
+        #endregion
+
     }
 }

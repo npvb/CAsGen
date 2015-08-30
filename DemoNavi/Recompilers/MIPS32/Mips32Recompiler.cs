@@ -68,16 +68,21 @@ namespace DemoNavi.Recompilers.MIPS32
         }
 
         private void WriteFunctionCallExp(FunctionCallExpression functioncall, StringBuilder programBuilder)
-        {
-            for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
+        { 
+           for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
             {
-                programBuilder.AppendFormat("add $a0,$a0, {0}", GetTypeSizeInBytes(functioncall.FunctionDeclaration.Parameters[i].Type));
+                programBuilder.AppendFormat("add $a0,$a0, {0}", GetTypeSizeInBytes(functioncall.Parameters.Exprlist[i].GetIRType()));
                 programBuilder.AppendLine();
                 var register = WriteExpr(functioncall.Parameters.Exprlist[i], registerFile, programBuilder);
                 programBuilder.AppendFormat("sw {0},($a0)", register);
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(register);
             }
-
+           programBuilder.AppendFormat("jal {0}", GenerateLabel(functioncall.Id, functioncall.Parameters.Exprlist));
+           programBuilder.AppendLine();
         }
+
+       
         #endregion  
        
         private void WriteBlock(BlockStatement blockstatement, StringBuilder programBuilder)
@@ -111,6 +116,10 @@ namespace DemoNavi.Recompilers.MIPS32
                 else if (statement is DoStatement)
                 {
                     WriteDoStatement(statement as DoStatement, programBuilder);
+                }
+                else if (statement is SwitchStatement)
+                {
+                    WriteSwitchStatement(statement as SwitchStatement, programBuilder);
                 }
             }
         }
@@ -201,6 +210,11 @@ namespace DemoNavi.Recompilers.MIPS32
             programBuilder.AppendLine();
         }
 
+        private void WriteSwitchStatement(SwitchStatement switchStatement, StringBuilder programBuilder)
+        {
+            WriteExpr(switchStatement.Expressions, registerFile, programBuilder);
+        }
+
         #endregion
 
         private string WriteExpr(Expression expr, RegisterFile registerFile, StringBuilder programBuilder, string registerToUse = "")
@@ -214,6 +228,15 @@ namespace DemoNavi.Recompilers.MIPS32
                 programBuilder.AppendLine();
                 return register;
 
+            }
+            else if(expr is IdValue)
+            {
+                registerFile = new RegisterFile(expr.ToString());
+                var argument = registerFile.FirstAvailableArgument();
+                programBuilder.AppendFormat("addi {0}, $zero, {1}", argument, expr.ToString());
+                programBuilder.AppendFormat("\t# Agrega el valor de {0} al argumento {1}", expr.ToString(), argument);
+                programBuilder.AppendLine();
+                return argument;
             }
             else if (expr is AddExpression)
             {
@@ -502,6 +525,12 @@ namespace DemoNavi.Recompilers.MIPS32
         {
             return "_" + function.Id + string.Join("_",function.Parameters.Select(p => p.Type.ToString()));  
         }
+
+        private object GenerateLabel(string id, List<Expression> list)
+        {
+            return "_" + id + string.Join("_", list.Select(p => p.GetIRType().ToString()));
+        }
+
         private int GetTypeSizeInWords(IRType type)
         {
             if (type is IntType)
@@ -538,8 +567,5 @@ namespace DemoNavi.Recompilers.MIPS32
             programBuilder.AppendLine("#Escribir Variables Globales"); 
         }
         #endregion
-
-        
-        
     }
 }

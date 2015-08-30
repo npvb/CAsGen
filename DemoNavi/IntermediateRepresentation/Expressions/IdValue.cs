@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace DemoNavi.Parser
+namespace DemoNavi.IntermediateRepresentation.Expressions
 {
     class IdValue : Expression
     {

@@ -19,7 +19,7 @@ namespace DemoNavi.IntermediateRepresentation.Statements
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            throw new NotImplementedException();
+           // throw new NotImplementedException();
         }
     }
 }

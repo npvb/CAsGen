@@ -69,15 +69,31 @@ namespace DemoNavi.ConsoleHost
                      Loop();
                      Console.ReadKey();
                  }
-
+         
                  static string Read()
                  {
                      Console.Write("1 ---- (Expression) o 2 ---- (Statement):   ");
                      if (Console.ReadLine() == "1")
                      {
+
                          return string.Format(@"int default_main() {{ {0} }} ", Console.ReadLine());
                      }
                      return string.Format(@"{0}", Console.ReadLine());
+                 }
+
+                 private static string ReadInput()
+                 {
+                     StringBuilder sb = new StringBuilder();
+                     ConsoleKeyInfo cki;
+                     do
+                     {
+                         cki = Console.ReadKey();
+                         if (cki.Key != ConsoleKey.F5)
+                         {
+                             sb.Append(cki.KeyChar);
+                         }
+                     } while (cki.Key != ConsoleKey.F5);
+                     return sb.ToString();
                  }
 
                  static string Eval(string program)
