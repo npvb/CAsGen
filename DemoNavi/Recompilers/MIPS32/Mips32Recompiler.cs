@@ -81,8 +81,7 @@ namespace DemoNavi.Recompilers.MIPS32
            programBuilder.AppendFormat("jal {0}", GenerateLabel(functioncall.Id, functioncall.Parameters.Exprlist));
            programBuilder.AppendLine();
         }
-
-       
+ 
         #endregion  
        
         private void WriteBlock(BlockStatement blockstatement, StringBuilder programBuilder)
@@ -120,6 +119,10 @@ namespace DemoNavi.Recompilers.MIPS32
                 else if (statement is SwitchStatement)
                 {
                     WriteSwitchStatement(statement as SwitchStatement, programBuilder);
+                }
+                else if (statement is BreakStatement) 
+                {
+                    WriteBreakStatement(statement as BreakStatement, programBuilder);
                 }
             }
         }
@@ -212,9 +215,48 @@ namespace DemoNavi.Recompilers.MIPS32
 
         private void WriteSwitchStatement(SwitchStatement switchStatement, StringBuilder programBuilder)
         {
-            WriteExpr(switchStatement.Expressions, registerFile, programBuilder);
+            programBuilder.Append("_JTAB:\t");
+            programBuilder.AppendLine();
+
+            for (int i = 0; i < switchStatement.CaseStatements.Count(); i++)
+            {
+                programBuilder.AppendFormat("\t.word _Lbl_{0} ", i.ToString());
+                programBuilder.AppendLine();
+            }
+            var register = registerFile.FirstAvailableRegister();
+            programBuilder.AppendFormat("la {0}, _JTAB", register);
+            programBuilder.Append("\t\t# Carga la dirección inicial de la jumping table.");
+            programBuilder.AppendLine();
+            programBuilder.AppendFormat("add {0}, {1}, $s1", register, register);
+            programBuilder.Append("\t# Suma el offset de la dirección de la tabla.");
+            programBuilder.AppendLine();
+            var nextRegister = registerFile.FirstAvailableRegister();
+            programBuilder.AppendFormat("lw {0}, 0 ({1})", nextRegister, register);
+            programBuilder.Append("\t\t# Carga la dirección guardada en _JTAB + $s0");
+            programBuilder.AppendLine();
+            programBuilder.AppendFormat("jr {0}", nextRegister);
+            programBuilder.Append("\t\t\t# y salta a esa dirección.");
+            programBuilder.AppendLine();
+            registerFile.FreeRegister(register);
+            registerFile.FreeRegister(nextRegister);
+
+            for (int i = 0; i<switchStatement.CaseStatements.Count(); i++)
+            {
+                programBuilder.AppendFormat("_Lbl_{0}: ", i.ToString() );
+                programBuilder.AppendLine();
+                //WriteExpr(switchStatement.Expressions, registerFile, programBuilder);
+                BlockStatement cases = new BlockStatement(switchStatement.CaseStatements[i].StatementList);
+                WriteBlock(cases, programBuilder);
+            }
+            programBuilder.AppendLine();
+            programBuilder.Append("_EXIT: ");
         }
 
+        private void WriteBreakStatement(BreakStatement breakStatement, StringBuilder programBuilder)
+        {
+            programBuilder.Append("j _EXIT");
+            programBuilder.Append("\t# Salta a _EXIT para salir del ciclo");
+        }
         #endregion
 
         private string WriteExpr(Expression expr, RegisterFile registerFile, StringBuilder programBuilder, string registerToUse = "")
@@ -569,3 +611,4 @@ namespace DemoNavi.Recompilers.MIPS32
         #endregion
     }
 }
+
