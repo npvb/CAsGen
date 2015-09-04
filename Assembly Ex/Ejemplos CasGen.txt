@@ -4,4 +4,4 @@ int answer(){add(10,20);} int add(int a, int b){int res; res = a + b;return res;
 int default_main(){while(1<2){int a = 9+1;}}
 int main(){add(1,2,3,4,5,6,7);} int add(int a){return res;}
 int default_main(){switch(2){ case 1: int a = 1+2; default: break;}}
-
+int array[12]; int x; x = 4; array[x] = 23;

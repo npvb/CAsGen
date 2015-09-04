@@ -10,12 +10,14 @@ namespace DemoNavi.IntermediateRepresentation.Types
     {
         public static bool operator ==(IRType left, IRType right)
         {
-            return object.ReferenceEquals(null,left) ? object.ReferenceEquals(null, right) : left.GetType() == right.GetType();
+            //return object.ReferenceEquals(null,left) ? object.ReferenceEquals(null, right) : left.GetType() == right.GetType();
+           return true;
         }
 
         public static bool operator !=(IRType left, IRType right)
         {
             return !(left == right);
         }
+
     }
 }
