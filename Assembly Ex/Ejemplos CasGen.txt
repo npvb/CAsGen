@@ -5,3 +5,17 @@ int default_main(){while(1<2){int a = 9+1;}}
 int main(){add(1,2,3,4,5,6,7);} int add(int a){return res;}
 int default_main(){switch(2){ case 1: int a = 1+2; default: break;}}
 int array[12]; int x; x = 4; array[x] = 23;
+int gcd(int a, int b){if (a > b){ a = a - b;}return a;}
+
+gcd:
+beq $a0, $a1, .L2
+slt $v0, $a1, $a0
+bne $v0, $zero, .L1
+subu $a1, $a1, $a0
+b gcd
+.L1:
+subu $a0, $a0, $a1
+b gcd
+.L2:
+move $v0, $a0
+j $ra

@@ -22,7 +22,8 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 
         public override string ToString()
         {
-            return base.Left.ToString() + " != " + base.Right.ToString();
+            //return base.Left.ToString() + " != " + base.Right.ToString();
+            return "";
         }
 
         public override Types.IRType GetIRType()

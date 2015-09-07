@@ -13,9 +13,8 @@ namespace DemoNavi.Recompilers.MIPS32
     public class Mips32Recompiler : Recompiler
     {
         RegisterFile registerFile = new RegisterFile();
-
         bool isArray = false;
-       
+
         public override string Recompile(int export, Program program)
         {
             StringBuilder programBuilder = new StringBuilder();
@@ -171,6 +170,7 @@ namespace DemoNavi.Recompilers.MIPS32
             programBuilder.Append("\t\t# Salta al label _EndIf para finalizar IF");
             programBuilder.AppendLine();
             programBuilder.Append("_EndIf:");
+            programBuilder.AppendLine();
         }
 
         private void WriteForStatement(ForStatement forStatement, StringBuilder programBuilder)

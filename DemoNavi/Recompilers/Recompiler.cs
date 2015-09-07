@@ -10,5 +10,6 @@ namespace DemoNavi.Recompilers
     public abstract class Recompiler
     {
         public abstract string Recompile(int export, Program program);
+
     }
 }

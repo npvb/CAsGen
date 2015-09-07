@@ -13,114 +13,99 @@ namespace DemoNavi.ConsoleHost
     {
         static void Main(string[] args)
         {
-
-            //            string program = @"
-            //                               
-            //                                int main() {
-            //                          
-            //                                     if(n == true)
-            //                                     {
-            //                                        for(i=0;i<52;i++,j--,h++)
-            //                                        {
-            //                                            while(i<59)
-            //                                            {
-            //                                                switch(n)
-            //                                                {
-            //                                                    case true: return x;
-            //                                                    case false: {return y;}
-            //                                                    default: return h;
-            //                                                }
-            //                                                int c = a+b;
-            //                                                int c = a&b;
-            //                                                int c = a|b;
-            //                                                int c = a&&b;
-            //                                                int c = a||b;
-            //                                                int c = a>>b;
-            //                                                int c = a<<b;
-            //                                                int c = a*b;
-            //                                                int c = a/b;
-            //                                                int c = a^b;
-            //                                                c = a+=b;
-            //                                            }
-            //                                        }
-            //                                     }
-            //    
-            //                                     return x;
-            //                              }";
-            /*            var parser = new DemoNavi.MyParser();
-                        string program = @"
-            
-
-            int add(int a, int b)
-            {
-                int res;
-                res = a + b;
-                return res;
-            }";
-
-
-                       // program = @"int main() { a = 1 + 2 + 3 + 4 + 5 + 6; } ";
-
-                        parser.Parse(program);
-                        var programa = parser.Program;
-                        Recompiler rec = new Mips32Recompiler();
-                        Console.WriteLine(rec.Recompile(0, programa));
-                        Console.ReadKey();*/
-                     Loop();
-                     Console.ReadKey();
-                 }
-         
-                 static string Read()
-                 {
-                     Console.Write("1 ---- (Expression) o 2 ---- (Statement):   ");
-                     if (Console.ReadLine() == "1")
-                     {
-
-                         return string.Format(@"int default_main() {{ {0} }} ", Console.ReadLine());
-                     }
-                     return string.Format(@"{0}", Console.ReadLine());
-                 }
-
-                 private static string ReadInput()
-                 {
-                     StringBuilder sb = new StringBuilder();
-                     ConsoleKeyInfo cki;
-                     do
-                     {
-                         cki = Console.ReadKey();
-                         if (cki.Key != ConsoleKey.F5)
-                         {
-                             sb.Append(cki.KeyChar);
-                         }
-                     } while (cki.Key != ConsoleKey.F5);
-                     return sb.ToString();
-                 }
-
-                 static string Eval(string program)
-                 {
-
-                     var parser = new DemoNavi.MyParser();
-                     parser.Parse(program);
-                     var programa = parser.Program;
-                     Recompiler rec = new Mips32Recompiler();
-
-                     return rec.Recompile(0, programa);
-                 }
-
-                 static void Print(string program)
-                 {
-                     Console.WriteLine(program);
-
-                 }
-
-                 static void Loop()
-                 {
-                     while (true)
-                     {
-                         Print(Eval(Read()));
-
-                     }
+            Loop();       
+            Console.ReadKey(); 
         }
+
+        #region REPL
+        public static bool toMips { get; set; }
+
+        public static bool toX86 { get; set; }
+
+        static string Read()
+        {
+           Console.Write(">>   ");
+           string command = Console.ReadLine();
+
+           if (command == "#expr" || command == "#EXPR")
+           {
+             Console.WriteLine("#expr >>  ");
+             return string.Format(@"int default_main() {{ {0} }} ", ReadInput());
+           }
+           else if (command == "#stmnt" || command == "#STMNT")
+           {
+               Console.WriteLine("#stmnt >>  ");
+               return string.Format(@"{0}", ReadInput());
+           }
+           else
+               return string.Format("Comando no reconocido. Solamente #expr o #stmnt son validos");
+         }
+
+        private static string ReadInput()
+        {
+          StringBuilder sb = new StringBuilder();
+          string line;
+                     /* ConsoleKeyInfo cki;
+                      do
+                      {
+                          cki = Console.ReadKey();
+                          if (cki.Key != ConsoleKey.F5)
+                          {
+                              sb.Append(cki.KeyChar);
+                          }
+                      } while (cki.Key != ConsoleKey.F5);
+                      return sb.ToString();*/
+          do
+          {
+              line = Console.ReadLine();
+              if (line == "toMips")
+              {
+                  toMips = true;
+              }
+              else if (line == "toX86")
+              {
+                  toX86 = true;
+              }
+              if (line != "toMips" && line != "toX86")
+              {
+                  sb.Append(line);
+              }
+          } while (line != "toMips" && line != "toX86");  
+          
+            return sb.ToString();
+         }
+
+        static string Eval(string program)
+        {
+            Recompiler rec = null;
+            var parser = new DemoNavi.MyParser();
+            parser.Parse(program);
+            var programa = parser.Program;
+            if(toMips == true)
+            {
+                rec = new Mips32Recompiler();
+            }
+           // Recompiler rec = new Mips32Recompiler();
+            return rec.Recompile(0, programa); 
+         }
+
+        static void Print(string program)
+        {
+           Console.WriteLine(program);
+
+        }
+
+        static void Loop()
+        {
+            while (true)
+            {
+               Print(Eval(Read()));
+
+             }
+        }
+
+        #endregion 
+    
     }
 }
-               
+

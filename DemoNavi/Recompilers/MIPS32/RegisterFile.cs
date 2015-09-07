@@ -18,6 +18,12 @@ namespace DemoNavi.Recompilers.MIPS32
             registers["$t1"] = false;
             registers["$t2"] = false;
             registers["$t3"] = false;
+            registers["$t4"] = false;
+            registers["$t5"] = false;
+            registers["$t6"] = false;
+            registers["$t7"] = false;
+            registers["$t8"] = false;
+            registers["$t9"] = false;
         }
 
         public string FirstAvailableRegister()
