@@ -18,3 +18,17 @@ C:\Users\Mish\Desktop\CAsGen\DemoNavi\bin\Debug\DemoNavi.pdb
 C:\Users\Mish\Desktop\CAsGen\DemoNavi\bin\Debug\GOLD Engine.dll
 C:\Users\Mish\Desktop\CAsGen\DemoNavi\obj\Debug\DemoNavi.dll
 C:\Users\Mish\Desktop\CAsGen\DemoNavi\obj\Debug\DemoNavi.pdb
+E:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\C-ANSI.egt
+E:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\DemoNavi.dll
+E:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\DemoNavi.pdb
+E:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\GOLD Engine.dll
+E:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.csprojResolveAssemblyReference.cache
+E:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.dll
+E:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.pdb
+D:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\C-ANSI.egt
+D:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\DemoNavi.dll
+D:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\DemoNavi.pdb
+D:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\GOLD Engine.dll
+D:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.csprojResolveAssemblyReference.cache
+D:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.dll
+D:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.pdb

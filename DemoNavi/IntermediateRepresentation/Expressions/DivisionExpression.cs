@@ -32,7 +32,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
 
         internal override void SemanticValidation(Semantic.SemanticContext semanticContext)
         {
-            Left.SemanticValidation(semanticContext);
+            /*Left.SemanticValidation(semanticContext);
             Right.SemanticValidation(semanticContext);
 
             if (!(Left.GetIRType() is NumericType && Right.GetIRType() is NumericType))
@@ -42,7 +42,7 @@ namespace DemoNavi.IntermediateRepresentation.Expressions
             else
             {
                 returnType = Left.GetIRType(); //evaluar cual tipo de podría asignar dependiendo de su tamanio
-            }
+            }*/
         }
     }
 }

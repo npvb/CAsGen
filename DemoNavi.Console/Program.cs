@@ -86,11 +86,12 @@ namespace DemoNavi.ConsoleHost
                 rec = new Mips32Recompiler();
             }
            // Recompiler rec = new Mips32Recompiler();
-            return rec.Recompile(0, programa); 
+            return rec.Recompile(programa); 
          }
 
         static void Print(string program)
         {
+           Console.WriteLine();
            Console.WriteLine(program);
 
         }

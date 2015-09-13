@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace DemoNavi.Recompilers.MIPS32
 {
@@ -14,19 +15,33 @@ namespace DemoNavi.Recompilers.MIPS32
     {
         RegisterFile registerFile = new RegisterFile();
         bool isArray = false;
+        bool inStack = false;
+        string savedValue = null;
 
-        public override string Recompile(int export, Program program)
+        public override string Recompile(Program program)
         {
             StringBuilder programBuilder = new StringBuilder();
 
-            if (export == 1)
-            {
-                WriteDataHeader(program, programBuilder);
-                WriteGlobalVariables(program, programBuilder);
-                WriteTextHeader(program, programBuilder);
-            }
-
+            WriteDataHeader(program, programBuilder);
+            WriteGlobalVariables(program, programBuilder);
+            WriteTextHeader(program, programBuilder);
             WriteFunctions(program.Declarations.OfType<FunctionDeclaration>(), programBuilder);
+            string path = AppDomain.CurrentDomain.BaseDirectory;
+            string pathNfile = String.Empty;
+
+            pathNfile = path + "\\Log.asm";
+
+            DirectoryInfo info = new DirectoryInfo(path);
+            if (!info.Exists)
+                info.Create();
+
+                FileStream archivoFtp = new FileStream(pathNfile, FileMode.Append);
+                StreamWriter escritor = new StreamWriter(archivoFtp, Encoding.Default);
+
+                escritor.WriteLine(programBuilder);
+                escritor.Close();
+
+        
             return programBuilder.ToString();
         }
 
@@ -143,7 +158,19 @@ namespace DemoNavi.Recompilers.MIPS32
 
         private void WriteIdDeclarationStatement(IdDeclarationStatement idDeclarationStatement, StringBuilder programBuilder)
         {
-            WriteExpr(idDeclarationStatement.InitializationExpression, registerFile, programBuilder);
+           var reg = WriteExpr(idDeclarationStatement.InitializationExpression, registerFile, programBuilder);
+           if (reg == "")
+           {
+               reg = registerFile.FirstAvailableSavedValue();
+
+               registerFile.stack1.value = "null";//guardar los valores en la pila
+               registerFile.stack1.id = idDeclarationStatement.Id;
+               registerFile.savedValuesList.Add(reg, registerFile.stack1);
+           }
+           else 
+           {
+               registerFile.savedTemporals.Add(reg, idDeclarationStatement.Id);
+           }
         }
 
         private void WriteIFStatement(IfStatement ifStatement, StringBuilder programBuilder)
@@ -272,7 +299,28 @@ namespace DemoNavi.Recompilers.MIPS32
 
             }else if (expr is DecValue) 
             {
-              var register = registerFile.FirstAvailableRegister();
+                var register = expr.ToString();
+
+                if (inStack == true)
+                {
+                    for (int x = 0; x < registerFile.savedValuesList.Count; x++)
+                    {
+                        if (registerFile.savedValuesList.ElementAt(x).Key == savedValue)
+                        {
+                            registerFile.stack1.id = registerFile.savedValuesList.ElementAt(x).Value.id;
+                            registerFile.stack1.value = expr.ToString();
+                            registerFile.savedValuesList[registerFile.savedValuesList.ElementAt(x).Key] = registerFile.stack1;
+                        }
+                        
+                    }
+                   register = savedValue;
+                }
+                else 
+                {
+                   register = registerFile.FirstAvailableRegister();
+                    
+                }
+
               programBuilder.AppendFormat("addi {0}, $zero, {1}", register, expr.ToString());
               programBuilder.AppendFormat("\t# Agrega {0} al registro {1}", expr.ToString(), register);
               programBuilder.AppendLine();
@@ -281,12 +329,35 @@ namespace DemoNavi.Recompilers.MIPS32
             }
             else if(expr is IdValue)
             {
-                registerFile = new RegisterFile(expr.ToString());
-                var argument = registerFile.FirstAvailableArgument();
-                programBuilder.AppendFormat("addi {0}, $zero, {1}", argument, expr.ToString());
-                programBuilder.AppendFormat("\t# Agrega el valor de {0} al argumento {1}", expr.ToString(), argument);
-                programBuilder.AppendLine();
-                return argument;
+                var register =  registerFile.FirstAvailableSavedValue();
+                if (inStack == true)
+                {
+                    if (!string.IsNullOrEmpty(registerFile.FirstAvailableSavedValue()))
+                    {
+                        for (int x = 0; x < registerFile.savedValuesList.Count; x++)
+                        {
+                            if (registerFile.savedValuesList.ElementAt(x).Key == savedValue)
+                            {
+                                registerFile.stack1.id = registerFile.savedValuesList.ElementAt(x).Value.id;
+                                registerFile.stack1.value = expr.ToString();
+                                registerFile.savedValuesList[registerFile.savedValuesList.ElementAt(x).Key] = registerFile.stack1;
+                                register = registerFile.savedValuesList.ElementAt(x).Key;
+                            }
+                        }
+                    }
+                }
+                else 
+                {
+                    for (int x = 0; x < registerFile.savedTemporals.Count; x++)
+                    {
+                        if (registerFile.savedTemporals.ElementAt(x).Value == expr.ToString())
+                        {
+                            register = registerFile.savedTemporals.ElementAt(x).Key;
+                        }
+                    }
+                }
+
+                return register;
             }
             else if (expr is AddExpression)
             {
@@ -320,7 +391,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 if (string.IsNullOrEmpty(registerToUse))
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
-                    programBuilder.AppendFormat("add{0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
                     programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
@@ -425,7 +496,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 if (string.IsNullOrEmpty(registerToUse))
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
-                    programBuilder.AppendFormat("add{0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
                     programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
                 }
@@ -498,9 +569,170 @@ namespace DemoNavi.Recompilers.MIPS32
                 }
                 return register;
             }
+            else if (expr is LessOrEqualToExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
+                    programBuilder.AppendLine();
+                }
+                var slt = expr as LessOrEqualToExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("ble {0}, {1}, {2}", register, register, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("ble {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
+            }
+            else if (expr is GreaterThanExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
+                    programBuilder.AppendLine();
+                }
+                var slt = expr as GreaterThanExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("bgt {0}, {1}, {2}", register, register, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("bgt {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
+            }
+            else if (expr is GreaterOrEqualExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
+                    programBuilder.AppendLine();
+                }
+                var slt = expr as GreaterThanExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("bge {0}, {1}, {2}", register, register, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("bge {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
+            }
+            else if (expr is EqualsExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
+                    programBuilder.AppendLine();
+                }
+                var slt = expr as EqualsExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("beq {0}, {1}, {2}", register, register, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("beq {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
+
+            }
+            #endregion
+
+            #region LOGICAL_EXPR
+            else if (expr is LogicalOrExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
+                    programBuilder.AppendLine();
+                }
+                var slt = expr as LogicalOrExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("or {0}, {1}, {2}", register, register, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("or {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
+
+            }
+            else if (expr is LogicAndExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                    programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
+                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
+                    programBuilder.AppendLine();
+                }
+                var slt = expr as LogicAndExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("and {0}, {1}, {2}", register, register, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("and {0}, {1}, {2}", register, register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+                }
+                return register;
             #endregion
 
             #region ASSIGN_EXPRESSIONS
+            }
             else if (expr is AdditionAssignmentExpression)
             {
                 var add = expr as AdditionAssignmentExpression;
@@ -510,31 +742,68 @@ namespace DemoNavi.Recompilers.MIPS32
                 programBuilder.AppendLine();
 
             }
+            else if (expr is SubtractionAsigExpression)
+            {
+                var add = expr as SubtractionAsigExpression;
+                var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
+                programBuilder.AppendFormat("sub $t0, $zero, {0}", leftRegister);
+                programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", leftRegister);
+                programBuilder.AppendLine();
+
+            }
+            else if (expr is MultiplicationAsigExpression)
+            {
+                var add = expr as MultiplicationAsigExpression;
+                var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
+                programBuilder.AppendFormat("mul $t0, $zero, {0}", leftRegister);
+                programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", leftRegister);
+                programBuilder.AppendLine();
+
+            }
+            else if (expr is DivisionAsigExpression)
+            {
+                var add = expr as DivisionAsigExpression;
+                var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
+                programBuilder.AppendFormat("mul $t0, $zero, {0}", leftRegister);
+                programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", leftRegister);
+                programBuilder.AppendLine();
+
+            }
             else if (expr is AssignExpression)
             {
                 var assign = expr as AssignExpression;
 
+                foreach (var id in registerFile.savedValuesList)
+                {
+                    if (id.Value.id == assign.Left.ToString())
+                    {
+                        inStack = true;
+                        savedValue = id.Key;
+                    }
+                }
+
+                var assignRegister = WriteExpr(assign.Right, registerFile, programBuilder);
+
                 if (assign.Left is PointerArrayAccessExpr)
                 {
                     isArray = true;
-                    var assignRegister = WriteExpr(assign.Right, registerFile, programBuilder);
+                    registerFile.FreeRegister(assignRegister);
                     WriteExpr(assign.Left, registerFile, programBuilder);
-                   // programBuilder.AppendFormat("add $t0, $zero, {0}", assignRegister);
-                   // programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", assignRegister);
-                   // programBuilder.AppendLine();
                     return assignRegister;
                 }
-                else 
+                else
                 {
-                    var assignRegister = WriteExpr(assign.Right, registerFile, programBuilder);
-                    programBuilder.AppendFormat("add $t0, $zero, {0}", assignRegister);
-                    programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", assignRegister);
+                    if (inStack == false)
+                    {
+                        programBuilder.AppendFormat("add $t0, $zero, {0}", assignRegister);
+                    }
                     programBuilder.AppendLine();
+                    inStack = false;
                     return assignRegister;
                 }
 
             }
-            #endregion
+                #endregion
 
             #region POST_PRE_INCREMENT_DECREMENT
             else if (expr is PostIncrementExpression)
@@ -587,34 +856,57 @@ namespace DemoNavi.Recompilers.MIPS32
             {
                 var array = expr as PointerArrayAccessExpr;
 
-                programBuilder.AppendFormat("{0}:	.word {1}",array.Pointer.ToString(),"1000");
-                
+                programBuilder.AppendFormat("{0}:	.word {1}", array.Pointer.ToString(), "1000");
                 programBuilder.AppendLine();
                 var listAddress = registerFile.FirstAvailableRegister();
                 programBuilder.AppendFormat("la {0}, {1}", listAddress, array.Pointer.ToString());
-                programBuilder.AppendFormat("\t# Pone la dirección de la lista en {0}", listAddress);
+                programBuilder.AppendFormat("\t\t# Pone la dirección de la lista en {0}", listAddress);
                 programBuilder.AppendLine();
-                registerFile.FreeRegister(listAddress);
+                //registerFile.FreeRegister(listAddress);
                 var index = registerFile.FirstAvailableRegister();
-                programBuilder.AppendFormat("li {0}, {1}", index, array.Value);
-                programBuilder.AppendFormat("\t# Agrega el indice a {0}",index);
+                string arrayValue = array.Value.ToString();
+
+                foreach (var id in registerFile.savedValuesList)
+                {
+                    if (id.Value.id == arrayValue.ToString())
+                    {
+                        arrayValue = id.Value.value;
+                    }
+                }
+
+
+                programBuilder.AppendFormat("li {0}, {1}", index, arrayValue);
+                programBuilder.AppendFormat("\t\t# Agrega el indice a {0}", index);
                 programBuilder.AppendLine();
-                programBuilder.AppendFormat("add {0}, {1}, {2}", index, index, index);
-                programBuilder.Append("\t# Dobla el índice");
+                var tempReg = registerFile.FirstAvailableRegister();
+                programBuilder.AppendFormat("mul {0}, {1}, {2}", tempReg, index, arrayValue);
+                programBuilder.AppendFormat("\t\t# {0} es el offset", tempReg);
                 programBuilder.AppendLine();
-                programBuilder.AppendFormat("add {0}, {1}, {2}", index, index, index);
-                programBuilder.Append("\t# Dobla el índice nuevamente (por 4x)");
+                registerFile.FreeRegister(tempReg);
+                tempReg = registerFile.FirstAvailableRegister();
+                programBuilder.AppendFormat("add {0}, {1}, {2}", tempReg, tempReg, listAddress);
+                programBuilder.AppendFormat("\t# {0} es la dirección de {1}[{0}]", tempReg, array.Pointer, arrayValue);
                 programBuilder.AppendLine();
-                var indexAddress = registerFile.FirstAvailableRegister();
-                programBuilder.AppendFormat("add {0}, {1}, {2}", indexAddress, index, listAddress);
-                programBuilder.Append("\t# Combina los dos elementos de la dirección.");
-                programBuilder.AppendLine();
+                /* programBuilder.AppendFormat("add {0}, {1}, {2}", index, index, index);
+               programBuilder.Append("\t# Dobla el índice");
+               programBuilder.AppendLine();
+               programBuilder.AppendFormat("add {0}, {1}, {2}", index, index, index);
+               programBuilder.Append("\t# Dobla el índice nuevamente (por 4x)");
+               programBuilder.AppendLine();
+               var indexAddress = registerFile.FirstAvailableRegister();
+               programBuilder.AppendFormat("add {0}, {1}, {2}", indexAddress, index, listAddress);
+               programBuilder.Append("\t# Combina los dos elementos de la dirección.");
+               programBuilder.AppendLine();*/
                 registerFile.FreeRegister(index);
                 var valueAddress = registerFile.FirstAvailableRegister();
-                programBuilder.AppendFormat("lw {0}, 0({1})", valueAddress , indexAddress);
-                programBuilder.Append("\t# Toma el valor indexado en el arreglo.");
+                //programBuilder.AppendFormat("li {0}, {1}", valueAddress, array.Value);
+                programBuilder.AppendFormat("\t\t\t# {0} es el valor {1} que se guardará en {2}[{3}]", valueAddress, array.Value, array.Pointer, array.Value);
                 programBuilder.AppendLine();
-                registerFile.FreeRegister(indexAddress);
+                programBuilder.AppendFormat("sw {0}, 0({1})", valueAddress, tempReg);
+                programBuilder.Append("\t\t# Toma el valor indexado en el arreglo.");
+                programBuilder.AppendLine();
+                //registerFile.FreeRegister(indexAddress);
+                registerFile.FreeRegister(tempReg);
                 registerFile.FreeRegister(valueAddress);
                 return listAddress;
             }
