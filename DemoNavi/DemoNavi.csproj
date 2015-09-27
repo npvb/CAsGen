@@ -162,6 +162,8 @@
     <Compile Include="Recompilers\MIPS32\Mips32Recompiler.cs" />
     <Compile Include="Recompilers\MIPS32\RegisterFile.cs" />
     <Compile Include="Recompilers\Recompiler.cs" />
+    <Compile Include="Recompilers\x86\RegisterFile.cs" />
+    <Compile Include="Recompilers\x86\x86Recompiler.cs" />
     <Compile Include="Utility\ParserExtensions.cs" />
   </ItemGroup>
   <ItemGroup>

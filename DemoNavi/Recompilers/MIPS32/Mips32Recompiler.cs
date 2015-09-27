@@ -16,30 +16,18 @@ namespace DemoNavi.Recompilers.MIPS32
         RegisterFile registerFile = new RegisterFile();
         bool isArray = false;
         bool inStack = false;
+        bool param = false;
         string savedValue = null;
+        StringBuilder headerBuilder = new StringBuilder();
 
         public override string Recompile(Program program)
         {
             StringBuilder programBuilder = new StringBuilder();
-
-            WriteDataHeader(program, programBuilder);
-            WriteGlobalVariables(program, programBuilder);
-            WriteTextHeader(program, programBuilder);
+            //WriteDataHeader(program, headerBuilder);
             WriteFunctions(program.Declarations.OfType<FunctionDeclaration>(), programBuilder);
-            string path = AppDomain.CurrentDomain.BaseDirectory;
-            string pathNfile = String.Empty;
-
-            pathNfile = path + "\\Log.asm";
-
-            DirectoryInfo info = new DirectoryInfo(path);
-            if (!info.Exists)
-                info.Create();
-
-                FileStream archivoFtp = new FileStream(pathNfile, FileMode.Append);
-                StreamWriter escritor = new StreamWriter(archivoFtp, Encoding.Default);
-
-                escritor.WriteLine(programBuilder);
-                escritor.Close();
+            WriteTextHeader(program, headerBuilder);
+            WriteGlobalVariables(program, headerBuilder);
+            WritetoLog(headerBuilder, programBuilder);
 
         
             return programBuilder.ToString();
@@ -59,23 +47,37 @@ namespace DemoNavi.Recompilers.MIPS32
             programBuilder.AppendFormat("{0}:", GenerateLabel(function));
             programBuilder.AppendLine();
             //reservar espacio en la pila
-            if (GenerateLabel(function) != "_default_main")
+            if (GenerateLabel(function) != "_default_main" && function.Parameters.Count()>0)
             {
-                programBuilder.AppendFormat("add $sp, #sp, -{0}", function.Parameters.Count() * 2);
+                programBuilder.AppendFormat("addi $sp, $sp, -{0}", function.Parameters.Count() * 2);
                 programBuilder.Append("\t# Reserva el espacio de memoria en pila. ");
                 programBuilder.AppendLine();
-                programBuilder.Append("sw $t0, 0($sp)");
+                programBuilder.Append("sw $ra, ($sp)");
                 programBuilder.Append("\t\t# Guarda el espacio de memoria en pila. ");
                 programBuilder.AppendLine();
+
+                if(function.Parameters.Count()>0)
+                {
+                    for (int x = 0; x < registerFile.savedArguments.Count; x++)
+                    {
+                        if (registerFile.savedArguments.ElementAt(x).Value == null)
+                        {
+                           registerFile.savedArguments[registerFile.savedArguments.ElementAt(x).Key] = function.Parameters.ElementAt(x).Id.ToString();
+                        }
+                        
+                    }
+                }
+
                 WriteBlock(function.Block, programBuilder);
                 //restablecer la pila
-                programBuilder.Append("lw $t0, 0($sp)");
-                programBuilder.Append("\t\t# Carga el valor anterior de los parametros. ");
-                programBuilder.AppendLine();
-                programBuilder.AppendFormat("add $sp, #sp, {0}", function.Parameters.Count() * 2);
+                //programBuilder.Append("lw $t0, 0($sp)");
+                //programBuilder.Append("\t\t# Carga el valor anterior de los parametros. ");
+                //programBuilder.AppendLine();
+                programBuilder.AppendFormat("addi $sp, $sp, {0}", function.Parameters.Count() * 2);
                 programBuilder.Append("\t# Restablece la pila.");
                 programBuilder.AppendLine();
                 programBuilder.Append("jr $ra");
+                programBuilder.AppendLine();
             }
             else 
             {
@@ -84,16 +86,21 @@ namespace DemoNavi.Recompilers.MIPS32
         }
 
         private void WriteFunctionCallExp(FunctionCallExpression functioncall, StringBuilder programBuilder)
-        { 
+        {
+           WriteFunctionDataHeader(functioncall, headerBuilder);
            for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
             {
-                programBuilder.AppendFormat("add $a0,$a0, {0}", GetTypeSizeInBytes(functioncall.Parameters.Exprlist[i].GetIRType()));
+                //programBuilder.AppendFormat("lw $a0,$a0, {0}", GetTypeSizeInBytes(functioncall.Parameters.Exprlist[i].GetIRType()));
+                var register = registerFile.FirstAvailableArgument();
+                programBuilder.AppendFormat("lw {0}, num{1}",register, i.ToString());
                 programBuilder.AppendLine();
-                var register = WriteExpr(functioncall.Parameters.Exprlist[i], registerFile, programBuilder);
-                programBuilder.AppendFormat("sw {0},($a0)", register);
-                programBuilder.AppendLine();
-                registerFile.FreeRegister(register);
+                registerFile.savedArguments.Add(register, null);
+                //var register = WriteExpr(functioncall.Parameters.Exprlist[i], registerFile, programBuilder);
+                //programBuilder.AppendFormat("sw {0},{1}", register);
+                //programBuilder.AppendLine();
+                param = true;
             }
+           registerFile.FreeAllArgument();
            programBuilder.AppendFormat("jal {0}", GenerateLabel(functioncall.Id, functioncall.Parameters.Exprlist));
            programBuilder.AppendLine();
         }
@@ -147,8 +154,9 @@ namespace DemoNavi.Recompilers.MIPS32
 
         private void WriteReturnStatement(ReturnStatement returnStatement, StringBuilder programBuilder)
         {
-            WriteExpr(returnStatement.ReturnExpression, registerFile, programBuilder);
-            programBuilder.AppendLine("add $v0, $t0, $zero");
+            var reg = WriteExpr(returnStatement.ReturnExpression, registerFile, programBuilder);
+            programBuilder.AppendFormat("add $v0, {0}, $zero",reg);
+            programBuilder.AppendLine();
         }
 
         private void WriteExpressionStatemnt(ExpressionStatement expressionStatement, StringBuilder programBuilder)
@@ -190,7 +198,8 @@ namespace DemoNavi.Recompilers.MIPS32
             else
             {
                 WriteBlock(ifStatement.Statements as BlockStatement, programBuilder);
-
+                programBuilder.Append("_ELSE: ");
+                programBuilder.AppendLine();
             }
 
             programBuilder.Append("j _EndIf");
@@ -315,9 +324,19 @@ namespace DemoNavi.Recompilers.MIPS32
                     }
                    register = savedValue;
                 }
-                else 
+                else if (param == true) 
                 {
-                   register = registerFile.FirstAvailableRegister();
+                    for (int x = 0; x < registerFile.savedArguments.Count; x++)
+                    {
+                        if (registerFile.savedArguments.ElementAt(x).Value == expr.ToString())
+                        {
+                            register = registerFile.savedArguments.ElementAt(x).Key;
+                        }
+                    }
+
+                }else
+                {
+                    register = registerFile.FirstAvailableRegister();
                     
                 }
 
@@ -330,7 +349,7 @@ namespace DemoNavi.Recompilers.MIPS32
             else if(expr is IdValue)
             {
                 var register =  registerFile.FirstAvailableSavedValue();
-                if (inStack == true)
+                if (inStack == true && param == false)
                 {
                     if (!string.IsNullOrEmpty(registerFile.FirstAvailableSavedValue()))
                     {
@@ -346,13 +365,22 @@ namespace DemoNavi.Recompilers.MIPS32
                         }
                     }
                 }
-                else 
+                else if (inStack == false && param == false)
                 {
                     for (int x = 0; x < registerFile.savedTemporals.Count; x++)
                     {
                         if (registerFile.savedTemporals.ElementAt(x).Value == expr.ToString())
                         {
                             register = registerFile.savedTemporals.ElementAt(x).Key;
+                        }
+                    }
+                }else if(param == true)
+                {
+                    for (int x = 0; x < registerFile.savedArguments.Count; x++)
+                    {
+                        if (registerFile.savedArguments.ElementAt(x).Value == expr.ToString())
+                        {
+                            register = registerFile.savedArguments.ElementAt(x).Key;
                         }
                     }
                 }
@@ -375,6 +403,8 @@ namespace DemoNavi.Recompilers.MIPS32
                 programBuilder.AppendFormat("\t# {0} + {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
+                registerFile.FreeArgument(leftRegister);
+                registerFile.FreeSavedValue(leftRegister);
                 
                 var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
                 if (register != rightRegister)
@@ -383,6 +413,8 @@ namespace DemoNavi.Recompilers.MIPS32
                     programBuilder.AppendFormat("\t# {0} + {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
+                    registerFile.FreeArgument(rightRegister);
+                    registerFile.FreeSavedValue(rightRegister);
                 }
                 return register;
 
@@ -401,6 +433,8 @@ namespace DemoNavi.Recompilers.MIPS32
                 programBuilder.AppendFormat("sub {0}, {1}, {2}", register, register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
+                registerFile.FreeArgument(leftRegister);
+                registerFile.FreeSavedValue(leftRegister);
 
                 var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
                 if (register != rightRegister)
@@ -408,6 +442,8 @@ namespace DemoNavi.Recompilers.MIPS32
                     programBuilder.AppendFormat("sub {0}, {1}, {2}", register, register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
+                    registerFile.FreeArgument(rightRegister);
+                    registerFile.FreeSavedValue(rightRegister);
                 }
                 return register;
 
@@ -571,7 +607,7 @@ namespace DemoNavi.Recompilers.MIPS32
             }
             else if (expr is LessOrEqualToExpression)
             {
-                if (string.IsNullOrEmpty(registerToUse))
+              /*  if (string.IsNullOrEmpty(registerToUse))
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
@@ -593,37 +629,60 @@ namespace DemoNavi.Recompilers.MIPS32
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
                 }
-                return register;
+                return register;*/
+                var slt = expr as LessOrEqualToExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                // var register = registerToUse;
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder);
+                programBuilder.AppendFormat("ble {0}, {1}, _ELSE", rightRegister, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} > {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendLine();
+
+                registerFile.FreeRegister(leftRegister);
+                registerFile.FreeArgument(leftRegister);
+                registerFile.FreeSavedValue(leftRegister);
+                registerFile.FreeRegister(rightRegister);
+                registerFile.FreeArgument(rightRegister);
+                registerFile.FreeSavedValue(rightRegister);
             }
             else if (expr is GreaterThanExpression)
             {
-                if (string.IsNullOrEmpty(registerToUse))
+               /* if (string.IsNullOrEmpty(registerToUse))
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
                     programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", registerToUse);
                     programBuilder.AppendLine();
-                }
+                }*/
                 var slt = expr as GreaterThanExpression;
                 var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
-                var register = registerToUse;
-                programBuilder.AppendFormat("bgt {0}, {1}, {2}", register, register, leftRegister);
-                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(), slt.Right.ToString());
+               // var register = registerToUse;
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder);
+                programBuilder.AppendFormat("bgt {0}, {1}, _ELSE", leftRegister, rightRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} > {1} ", slt.Left.ToString(), slt.Right.ToString());
                 programBuilder.AppendLine();
-                registerFile.FreeRegister(leftRegister);
 
-                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
+                registerFile.FreeRegister(leftRegister);
+                registerFile.FreeArgument(leftRegister);
+                registerFile.FreeSavedValue(leftRegister);
+                registerFile.FreeRegister(rightRegister);
+                registerFile.FreeArgument(rightRegister);
+                registerFile.FreeSavedValue(rightRegister);
+
+              /*  var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder, register);
                 if (register != rightRegister)
                 {
                     programBuilder.AppendFormat("bgt {0}, {1}, {2}", register, register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
-                }
-                return register;
+                    registerFile.FreeArgument(rightRegister);
+                    registerFile.FreeSavedValue(rightRegister);
+                }*/
+                return leftRegister;
             }
             else if (expr is GreaterOrEqualExpression)
             {
-                if (string.IsNullOrEmpty(registerToUse))
+                /*if (string.IsNullOrEmpty(registerToUse))
                 {
                     registerToUse = registerFile.FirstAvailableRegister();
                     programBuilder.AppendFormat("add {0}, $zero, $zero", registerToUse);
@@ -634,7 +693,7 @@ namespace DemoNavi.Recompilers.MIPS32
                 var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
                 var register = registerToUse;
                 programBuilder.AppendFormat("bge {0}, {1}, {2}", register, register, leftRegister);
-                programBuilder.AppendFormat("\t# Evalua {0} < {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendFormat("\t# Evalua {0} > {1} ", slt.Left.ToString(), slt.Right.ToString());
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
 
@@ -645,7 +704,21 @@ namespace DemoNavi.Recompilers.MIPS32
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
                 }
-                return register;
+                return register;*/
+                var slt = expr as GreaterOrEqualExpression;
+                var leftRegister = WriteExpr(slt.Right, registerFile, programBuilder);
+                // var register = registerToUse;
+                var rightRegister = WriteExpr(slt.Left, registerFile, programBuilder);
+                programBuilder.AppendFormat("bge {0}, {1}, _ELSE", rightRegister, leftRegister);
+                programBuilder.AppendFormat("\t# Evalua {0} > {1} ", slt.Left.ToString(), slt.Right.ToString());
+                programBuilder.AppendLine();
+
+                registerFile.FreeRegister(leftRegister);
+                registerFile.FreeArgument(leftRegister);
+                registerFile.FreeSavedValue(leftRegister);
+                registerFile.FreeRegister(rightRegister);
+                registerFile.FreeArgument(rightRegister);
+                registerFile.FreeSavedValue(rightRegister);
             }
             else if (expr is EqualsExpression)
             {
@@ -944,22 +1017,59 @@ namespace DemoNavi.Recompilers.MIPS32
             return GetTypeSizeInWords(type) * 4;
         }
 
-        private void WriteDataHeader(Program program, StringBuilder programBuilder) 
+     /*   private void WriteDataHeader(Program program, StringBuilder programBuilder) 
         {
             programBuilder.AppendLine(".data");
-            programBuilder.AppendFormat("privateMem: .word 0: {0}", program.Declarations.OfType<FunctionDeclaration>().Max(f => f.Parameters.Sum(p => GetTypeSizeInWords(p.Type))));
+
+            if (program.Declarations.OfType<FunctionDeclaration>().Select(f => f.Parameters).Count() > 0)//program.Declarations.OfType<FunctionDeclaration>().Max(f => f.Parameters.Sum(p => GetTypeSizeInWords(p.Type))) != 0)
+            {
+               // programBuilder.AppendFormat("privateMem: .word 0: {0}", program.Declarations.OfType<FunctionDeclaration>().Max(f => f.Parameters.Sum(p => GetTypeSizeInWords(p.Type))));
+                
+            }
             programBuilder.AppendLine();
 
+        }*/
+        private void WriteFunctionDataHeader(FunctionCallExpression function, StringBuilder programBuilder)
+        {
+            int count = 0;
+            programBuilder.AppendLine(".data");
+            foreach (var parameters in function.Parameters.Exprlist)
+            {
+                programBuilder.AppendFormat("num{0}: .word  {1}", count, parameters.ToString());
+                count += 1;
+                programBuilder.AppendLine();
+            }
         }
+
         private void WriteTextHeader(Program program, StringBuilder programBuilder) 
         {
+            if (param == false) 
+            {
+                programBuilder.AppendLine(".data");
+            }
             programBuilder.AppendLine(".text");
-            programBuilder.AppendLine("la $a0, privateMem");
-            programBuilder.AppendLine("jal _main");
         }
         private void WriteGlobalVariables(Program program, StringBuilder programBuilder)
         {
-            programBuilder.AppendLine("#Escribir Variables Globales"); 
+           // programBuilder.AppendLine(".globl main "); 
+        }
+
+        private void WritetoLog(StringBuilder headerBuilder, StringBuilder programBuilder)
+        {
+            string path = AppDomain.CurrentDomain.BaseDirectory;
+            string pathNfile = String.Empty;
+            pathNfile = path + "\\Ejemplo_Mips.asm";
+
+            DirectoryInfo info = new DirectoryInfo(path);
+            if (!info.Exists)
+                info.Create();
+
+            FileStream archivoFtp = new FileStream(pathNfile, FileMode.Append);
+            StreamWriter escritor = new StreamWriter(archivoFtp, Encoding.Default);
+
+            escritor.WriteLine(headerBuilder);
+            escritor.WriteLine(programBuilder);
+            escritor.Close();
         }
         #endregion
     }

@@ -21,6 +21,7 @@ namespace DemoNavi.Recompilers.MIPS32
         Dictionary<String, Boolean> savedValues= new Dictionary<string, bool>();
         public Dictionary<String, String> savedTemporals = new Dictionary<string, string>();
         public Dictionary<String, Stack> savedValuesList = new Dictionary<string, Stack>();
+        public Dictionary<String, String> savedArguments = new Dictionary<string, string>();
 
         
         #region Registers
@@ -105,6 +106,13 @@ namespace DemoNavi.Recompilers.MIPS32
             argumentRegisters[argument] = false;
         }
 
+        internal void FreeAllArgument()
+        {
+            argumentRegisters["$a0"] = false;
+            argumentRegisters["$a1"] = false;
+            argumentRegisters["$a2"] = false;
+            argumentRegisters["$a3"] = false;
+        }
         #endregion
 
         #region SavedValues

@@ -1,6 +1,7 @@
 ﻿using DemoNavi.Recompilers;
 using DemoNavi.Recompilers.Basic;
 using DemoNavi.Recompilers.MIPS32;
+using DemoNavi.Recompilers.x86;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,16 +46,7 @@ namespace DemoNavi.ConsoleHost
         {
           StringBuilder sb = new StringBuilder();
           string line;
-                     /* ConsoleKeyInfo cki;
-                      do
-                      {
-                          cki = Console.ReadKey();
-                          if (cki.Key != ConsoleKey.F5)
-                          {
-                              sb.Append(cki.KeyChar);
-                          }
-                      } while (cki.Key != ConsoleKey.F5);
-                      return sb.ToString();*/
+
           do
           {
               line = Console.ReadLine();
@@ -81,9 +73,14 @@ namespace DemoNavi.ConsoleHost
             var parser = new DemoNavi.MyParser();
             parser.Parse(program);
             var programa = parser.Program;
-            if(toMips == true)
+
+            if (toMips == true)
             {
                 rec = new Mips32Recompiler();
+            }
+            else if (toX86 == true)
+            {
+                rec = new x86Recompiler();
             }
            // Recompiler rec = new Mips32Recompiler();
             return rec.Recompile(programa); 
