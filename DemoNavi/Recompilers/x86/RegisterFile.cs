@@ -17,13 +17,14 @@ namespace DemoNavi.Recompilers.x86
         public Stack stackx86;
         public Dictionary<String, Stack> stack = new Dictionary<string, Stack>();
         Dictionary<String, Boolean> registers = new Dictionary<string, bool>();
+        public Dictionary<String, Boolean> savedTemporals = new Dictionary<string, bool>();
         
         public RegisterFile()
         {
-            registers["EAX"] = false;
-            registers["AL"] = false;
-            registers["BL"] = false;
-            registers["CL"] = false;
+            registers["eax"] = false;
+            registers["ebx"] = false;
+            registers["ecx"] = false;
+            registers["edx"] = false;
             registers["DL"] = false;
             registers["AH"] = false;
             registers["BH"] = false;
@@ -48,6 +49,5 @@ namespace DemoNavi.Recompilers.x86
         {
             registers[register] = false;
         }
-
     }
 }

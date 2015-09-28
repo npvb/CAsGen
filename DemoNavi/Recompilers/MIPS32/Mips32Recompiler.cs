@@ -810,8 +810,8 @@ namespace DemoNavi.Recompilers.MIPS32
             {
                 var add = expr as AdditionAssignmentExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
-                programBuilder.AppendFormat("add $t0, $zero, {0}", leftRegister);
-                programBuilder.AppendFormat("\t# Inicializar la variable {0} con 0", leftRegister);
+                programBuilder.AppendFormat("addi $t0, {0}, {1}", leftRegister, add.Left);
+                programBuilder.AppendFormat("\t# Inicializar la variable {0} con {1}", leftRegister, add.Left);
                 programBuilder.AppendLine();
 
             }

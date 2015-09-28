@@ -54,11 +54,11 @@ namespace DemoNavi.ConsoleHost
               {
                   toMips = true;
               }
-              else if (line == "toX86")
+              else if (line == "toX86" || line == "tox86")
               {
                   toX86 = true;
               }
-              if (line != "toMips" && line != "toX86")
+              if (line != "toMips" && line != "toX86" )
               {
                   sb.Append(line);
               }

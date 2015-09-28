@@ -25,13 +25,6 @@ E:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\GOLD Engine.dll
 E:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.csprojResolveAssemblyReference.cache
 E:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.dll
 E:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.pdb
-F:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\C-ANSI.egt
-F:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\DemoNavi.dll
-F:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\DemoNavi.pdb
-F:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\GOLD Engine.dll
-F:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.csprojResolveAssemblyReference.cache
-F:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.dll
-F:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.pdb
 D:\Proyecto Graduación\CAsGen\DemoNavi\obj\Debug\DemoNavi.csprojResolveAssemblyReference.cache
 D:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\C-ANSI.egt
 D:\Proyecto Graduación\CAsGen\DemoNavi\bin\Debug\DemoNavi.dll
