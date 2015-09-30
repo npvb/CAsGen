@@ -49,5 +49,18 @@ namespace DemoNavi.Recompilers.x86
         {
             registers[register] = false;
         }
+
+        internal string RegisterPosition(string id)
+        {
+            for (int x = 0; x < stack.Count(); x++ )
+            {
+                if (stack.ElementAt(x).Key == id) 
+                {
+                    return stack.ElementAt(x).Value.positioninStack;
+                }
+            }
+                return "0";
+            throw new Exception("FirstUsedRegister()->Todos los Registros sin Usar");
+        }
     }
 }

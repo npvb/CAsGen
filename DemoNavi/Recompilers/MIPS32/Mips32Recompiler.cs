@@ -155,7 +155,7 @@ namespace DemoNavi.Recompilers.MIPS32
         private void WriteReturnStatement(ReturnStatement returnStatement, StringBuilder programBuilder)
         {
             var reg = WriteExpr(returnStatement.ReturnExpression, registerFile, programBuilder);
-            programBuilder.AppendFormat("add $v0, {0}, $zero",reg);
+            programBuilder.AppendFormat("mov eax, {0}",reg);
             programBuilder.AppendLine();
         }
 
