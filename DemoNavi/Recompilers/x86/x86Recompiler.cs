@@ -17,6 +17,7 @@ namespace DemoNavi.Recompilers.x86
         bool isArray = false;
         bool indexFound = false;
         int labelCount = 0;
+        int count;
         bool param = false;
         bool inStack = false;
         bool inCycle = false;
@@ -31,7 +32,7 @@ namespace DemoNavi.Recompilers.x86
             registerFile.stackx86.idValue = "-1";
             registerFile.stackx86.positioninStack = "0";
             registerFile.stack.Add("ra", registerFile.stackx86);
-            registerFile.savedTemporals.Add("1",true);
+            registerFile.savedTemporals.Add("1", true);
             WriteFunctions(program.Declarations.OfType<FunctionDeclaration>(), programBuilder);
             WriteTextHeader(program, headerBuilder);
             WritetoLog(headerBuilder, programBuilder);
@@ -52,37 +53,49 @@ namespace DemoNavi.Recompilers.x86
         private void WriteFunction(FunctionDeclaration function, StringBuilder programBuilder)
         {
             mainName = GenerateLabel(function);
+            if (function.Parameters.Count() > 0)
+            {
+                foreach (var param in function.Parameters)
+                {
+                    registerFile.stackx86.idValue = null;
+                    var pos = registerFile.stack.Last().Value.positioninStack;
+                    registerFile.stackx86.positioninStack = Convert.ToString(Convert.ToInt32(pos) + 4);
+                    registerFile.stack.Add(param.Id, registerFile.stackx86);
+                }
+            }
+
             WriteGlobalVariables(programBuilder, mainName);
+            programBuilder.AppendLine();
             programBuilder.AppendFormat("{0}:", mainName);
             programBuilder.AppendLine();
-            //reservar espacio en la pila
-            //if (GenerateLabel(function) != "_default_main" && function.Parameters.Count() > 0)
-            //{
-                programBuilder.Append("push ebp");
-                programBuilder.Append("\t\t# Reserva el espacio de memoria en pila. ");
-                programBuilder.AppendLine();
-                programBuilder.Append("mov ebp, esp");
-                programBuilder.Append("\t\t# Guarda el espacio de memoria en pila. ");
-                programBuilder.AppendLine();
-                programBuilder.Append("sub ebp, -64");
-                programBuilder.AppendLine("\t\t# Reserva el espacio para variables a usar. ");
-                WriteBlock(function.Block, programBuilder);
-                programBuilder.Append("mov DWORD PTR [ebp-16], eax");
-                programBuilder.Append("\t# Guarda eax en la pila para retorno");
-                programBuilder.AppendLine();
-                programBuilder.AppendLine("leave");
-                programBuilder.Append("ret");
-                programBuilder.Append("\t\t# Restablece la pila.");
-                programBuilder.AppendLine();
-           // }
-            //else
-            //{
-              //  WriteBlock(function.Block, programBuilder);
-            //}
+            programBuilder.Append("\t push ebp");
+            programBuilder.Append("\t\t# Reserva el espacio de memoria en pila. ");
+            programBuilder.AppendLine();
+            programBuilder.Append("\t mov ebp, esp");
+            programBuilder.Append("\t\t# Guarda el espacio de memoria en pila. ");
+            programBuilder.AppendLine();
+            programBuilder.Append("\t sub ebp, -64");
+            programBuilder.AppendLine("\t\t# Reserva el espacio para variables a usar. ");
+
+            WriteBlock(function.Block, programBuilder);
+
+            programBuilder.Append("\t mov DWORD PTR [ebp-16], eax");
+            programBuilder.Append("\t# Guarda eax en la pila para retorno");
+            programBuilder.AppendLine();
+            programBuilder.AppendLine("\t leave");
+            programBuilder.Append("\t ret");
+            programBuilder.Append("\t\t# Restablece la pila.");
+            programBuilder.AppendLine();
+           
         }
 
         private void WriteFunctionCallExp(FunctionCallExpression functioncall, StringBuilder programBuilder)
         {
+            for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
+            {
+                WriteExpr(functioncall.Parameters.Exprlist[i], registerFile, programBuilder);
+            }
+            programBuilder.AppendLine("\t pop ebp");
         }
 
         #endregion
@@ -135,7 +148,7 @@ namespace DemoNavi.Recompilers.x86
         private void WriteReturnStatement(ReturnStatement returnStatement, StringBuilder programBuilder)
         {
             var reg = WriteExpr(returnStatement.ReturnExpression, registerFile, programBuilder);
-            programBuilder.AppendFormat("add $v0, {0}, $zero", reg);
+            programBuilder.AppendFormat("\t mov eax, {0}", reg);
             programBuilder.AppendLine();
         }
 
@@ -158,19 +171,20 @@ namespace DemoNavi.Recompilers.x86
             else
                 if (idDeclarationStatement.InitializationExpression == null)
                 {
-                   // registerFile.stackx86.idValue = null;
+                    // registerFile.stackx86.idValue = null;
                     registerFile.stackx86.positioninStack = Convert.ToString(Convert.ToInt32(pos) + 4);
                     //registerFile.savedTemporals.Add(idDeclarationStatement.Id, true);
                     registerFile.stack.Add(idDeclarationStatement.Id, registerFile.stackx86);
-                }else
+                }
+                else
                 {
                     savedValue = idDeclarationStatement.Id;
                     registerFile.savedTemporals.Add(savedValue, true);
                 }
 
-            
+
             WriteExpr(idDeclarationStatement.InitializationExpression, registerFile, programBuilder);
-            
+
         }
 
         private void WriteIFStatement(IfStatement ifStatement, StringBuilder programBuilder)
@@ -179,18 +193,18 @@ namespace DemoNavi.Recompilers.x86
 
             if (ifStatement.IfFalse != null)
             {
-               /* programBuilder.AppendFormat("beq {0}, $0, _ELSE", register);
-                programBuilder.Append("\t# if FALSO goto ELSE");
-                programBuilder.AppendLine();
-                programBuilder.Append("_ELSE: ");
-                programBuilder.AppendLine();*/
+                /* programBuilder.AppendFormat("beq {0}, $0, _ELSE", register);
+                 programBuilder.Append("\t# if FALSO goto ELSE");
+                 programBuilder.AppendLine();
+                 programBuilder.Append("_ELSE: ");
+                 programBuilder.AppendLine();*/
 
                 WriteBlock(ifStatement.IfFalse as BlockStatement, programBuilder);
             }
             else
             {
                 WriteBlock(ifStatement.Statements as BlockStatement, programBuilder);
-                programBuilder.AppendFormat("jmp .L{0}",labelCount);
+                programBuilder.AppendFormat("jmp .L{0}", labelCount);
                 programBuilder.AppendLine();
             }
 
@@ -241,18 +255,47 @@ namespace DemoNavi.Recompilers.x86
             programBuilder.AppendLine();
             WriteBlock(doStatement.Statements as BlockStatement, programBuilder);
             WriteExpr(doStatement.Expressions, registerFile, programBuilder);
-            
+
         }
 
         private void WriteSwitchStatement(SwitchStatement switchStatement, StringBuilder programBuilder)
         {
-            
+            var register = WriteExpr(switchStatement.Expressions, registerFile, programBuilder);
+
+            for (int i = 0; i < switchStatement.CaseStatements.Count(); i++)
+            {
+                if (switchStatement.CaseStatements.ElementAt(i) is CaseStatement)
+                {
+                    labelCount = i + 1;
+                    programBuilder.AppendFormat("\t cmp {0}, {1}", register, (i + 1).ToString());
+                    programBuilder.AppendLine();
+                    programBuilder.AppendFormat("\t je .L{0} ", (i + 1).ToString());
+                    programBuilder.AppendLine();
+                }
+                else
+                    if (switchStatement.CaseStatements.ElementAt(i) is DefaultCaseStatement)
+                    {
+                        labelCount = switchStatement.CaseStatements.Count() + 1;
+                        programBuilder.AppendFormat("\t jne .L{0} ", labelCount);
+                        programBuilder.AppendLine();
+                    }
+            }
+
+            for (int i = 0; i < switchStatement.CaseStatements.Count(); i++)
+            {
+                programBuilder.AppendFormat(".L{0} ", (i + 1).ToString());
+                programBuilder.AppendLine();
+                BlockStatement cases = new BlockStatement(switchStatement.CaseStatements[i].StatementList);
+                WriteBlock(cases, programBuilder);
+            }
+            programBuilder.AppendLine();
+            programBuilder.AppendFormat(".L{0} ", switchStatement.CaseStatements.Count().ToString());
+            programBuilder.AppendLine();
         }
 
         private void WriteBreakStatement(BreakStatement breakStatement, StringBuilder programBuilder)
         {
-            programBuilder.Append("j _EXIT");
-            programBuilder.Append("\t\t\t# Salta a _EXIT para salir del ciclo");
+            programBuilder.AppendFormat("\t jne .L{0} ", labelCount);
             programBuilder.AppendLine();
         }
         #endregion
@@ -276,7 +319,7 @@ namespace DemoNavi.Recompilers.x86
                         //inStack = true;
                         inCycle = true;
                         register = registerFile.RegisterPosition(savedValue);//registerFile.stack.ElementAt(x).Value.positioninStack;
-    
+
                         registerFile.stackx86.positioninStack = register;
                         registerFile.stackx86.idValue = expr.ToString();
                         registerFile.stack[registerFile.stack.ElementAt(x).Key] = registerFile.stackx86;
@@ -296,7 +339,7 @@ namespace DemoNavi.Recompilers.x86
 
                 if (indexFound == true && inStack == true)
                 {
-                    programBuilder.AppendFormat("mov DWORD PTR [ebp-{0}], {1}", register, expr.ToString());
+                    programBuilder.AppendFormat("\t mov DWORD PTR [ebp-{0}], {1}", register, expr.ToString());
                     programBuilder.AppendFormat("\t# Mueve {0} a la posición en la pila {1}", expr.ToString(), register);
                     programBuilder.AppendLine();
                     register = string.Format("DWORD PTR [ebp-{0}]", register);
@@ -306,7 +349,7 @@ namespace DemoNavi.Recompilers.x86
                     if (indexFound == false || inStack == true || inCycle == true)
                     {
                         var reg = registerFile.FirstAvailableRegister();
-                        programBuilder.AppendFormat("mov {0} , {1}", reg, expr.ToString());
+                        programBuilder.AppendFormat("\t mov {0} , {1}", reg, expr.ToString());
                         programBuilder.AppendFormat("\t# Mueve {0} a {1}", expr.ToString(), reg);
                         programBuilder.AppendLine();
                         register = reg;
@@ -322,12 +365,12 @@ namespace DemoNavi.Recompilers.x86
 
                 for (int x = 0; x < registerFile.stack.Count(); x++)
                 {
-                    if(registerFile.stack.ElementAt(x).Key == register)
+                    if (registerFile.stack.ElementAt(x).Key == register)
                     {
                         register = registerFile.stack.ElementAt(x).Value.positioninStack;
                     }
                 }
-                programBuilder.AppendFormat("mov {0}, DWORD PTR [ebp-{1}]", firstAvailableReg, register);
+                programBuilder.AppendFormat("\t mov {0}, DWORD PTR [ebp-{1}]", firstAvailableReg, register);
                 programBuilder.AppendFormat("\t# Mueve {0} a la pos ebp - {1}", expr.ToString(), register);
                 programBuilder.AppendLine();
                 register = firstAvailableReg;
@@ -344,21 +387,21 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as AddExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("add {0}, {1}",  register, leftRegister);
+                programBuilder.AppendFormat("\t add {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t\t# {0} + {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
 
                 var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
-                
-                
+
+
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("add {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t add {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} + {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
-                    
+
                 }
                 return register;
             }
@@ -371,7 +414,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as SubExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("sub {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t sub {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t\t# {0} - {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -381,7 +424,7 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("sub {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t sub {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} - {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
@@ -399,7 +442,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as MulExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("mul {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t mul {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t\t# {0} * {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -409,7 +452,7 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("mul {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t mul {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} * {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
@@ -427,7 +470,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as DivisionExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("div {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t div {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t\t# {0} / {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -437,7 +480,7 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("div {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t div {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} / {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
@@ -457,7 +500,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as BitwiseAndExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("and {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t and {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t\t# {0} & {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -467,7 +510,7 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("and {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t and {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} & {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
@@ -484,7 +527,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as BitwiseOrExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("or {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t or {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t\t# {0} | {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -494,7 +537,7 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("or {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t or {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} | {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
@@ -511,7 +554,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as BitwiseXorExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("xor {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t xor {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t\t# {0} ^ {1}", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -521,7 +564,7 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("xor {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t xor {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} ^ {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
@@ -538,7 +581,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as LessThanExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("mov {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t mov {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t# Mueve {0} a {1} para hacer el cmp", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -548,21 +591,21 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("cmp {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t cmp {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} < {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
 
                 }
                 labelCount += 1;
-                programBuilder.AppendFormat("jge .L{0}", labelCount);
+                programBuilder.AppendFormat("\t jge .L{0}", labelCount);
                 programBuilder.AppendFormat("\t\t# Salta al label {0} si es >=.", labelCount);
                 programBuilder.AppendLine();
                 programBuilder.AppendFormat(".L{0}", labelCount);
                 programBuilder.AppendLine();
 
                 return register;
-                 
+
             }
             else if (expr is LessOrEqualToExpression)
             {
@@ -573,7 +616,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as LessOrEqualToExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("mov {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t mov {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t# Mueve {0} a {1} para hacer el cmp", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -583,15 +626,17 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("cmp {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t cmp {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} < {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
 
                 }
                 labelCount += 1;
-                programBuilder.AppendFormat("jg .L{0}", labelCount);
+                programBuilder.AppendFormat("\t jg .L{0}", labelCount);
                 programBuilder.AppendFormat("\t\t# Salta al label {0} si es >=.", labelCount);
+                programBuilder.AppendLine();
+                programBuilder.AppendFormat(".L{0}", labelCount);
                 programBuilder.AppendLine();
 
                 return register;
@@ -605,7 +650,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as GreaterThanExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("mov {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t mov {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t# Mueve {0} a {1} para hacer el cmp", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -615,15 +660,17 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("cmp {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t cmp {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} < {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
 
                 }
                 labelCount += 1;
-                programBuilder.AppendFormat("jle .L{0}", labelCount);
+                programBuilder.AppendFormat("\t jle .L{0}", labelCount);
                 programBuilder.AppendFormat("\t\t# Salta al label {0} si es <.", labelCount);
+                programBuilder.AppendLine();
+                programBuilder.AppendFormat(".L{0}", labelCount);
                 programBuilder.AppendLine();
 
                 return register;
@@ -637,7 +684,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as GreaterOrEqualExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("mov {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t mov {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t# Mueve {0} a {1} para hacer el cmp", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -647,19 +694,21 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("cmp {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t cmp {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} < {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
 
                 }
                 labelCount += 1;
-                programBuilder.AppendFormat("jl .L{0}", labelCount);
+                programBuilder.AppendFormat("\t jl .L{0}", labelCount);
                 programBuilder.AppendFormat("\t\t# Salta al label {0} si es <.", labelCount);
+                programBuilder.AppendLine();
+                programBuilder.AppendFormat(".L{0}", labelCount);
                 programBuilder.AppendLine();
 
                 return register;
-               
+
             }
             else if (expr is EqualsExpression)
             {
@@ -670,7 +719,7 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as EqualsExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("mov {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t mov {0}, {1}", register, leftRegister);
                 programBuilder.AppendFormat("\t# Mueve {0} a {1} para hacer el cmp", register, leftRegister);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
@@ -680,14 +729,14 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("cmp {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t cmp {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} < {1}", register, rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
 
                 }
                 labelCount += 1;
-                programBuilder.AppendFormat("jne .L{0}", labelCount);
+                programBuilder.AppendFormat("\t jne .L{0}", labelCount);
                 programBuilder.AppendFormat("\t\t# Salta al label {0} si es <.", labelCount);
                 programBuilder.AppendLine();
 
@@ -706,10 +755,10 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as BitwiseAndExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("cmp {0}, 0", leftRegister);
-                programBuilder.AppendFormat("\t\t# Compara {0} con 0",  leftRegister);
+                programBuilder.AppendFormat("\t cmp {0}, 0", leftRegister);
+                programBuilder.AppendFormat("\t\t# Compara {0} con 0", leftRegister);
                 programBuilder.AppendLine();
-                programBuilder.AppendFormat("\t\t# jne .L{0}", labelCount);
+                programBuilder.AppendFormat("\t jne .L{0}", labelCount);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
 
@@ -718,15 +767,15 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat("cmp {0}, 0", rightRegister);
+                    programBuilder.AppendFormat("\t cmp {0}, 0", rightRegister);
                     programBuilder.AppendFormat("\t\t# Compara {0} con 0", rightRegister);
                     programBuilder.AppendLine();
-                    programBuilder.AppendFormat("\t\t# jne .L{0}", labelCount);
+                    programBuilder.AppendFormat("\t jne .L{0}", labelCount);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
 
                 }
-                return register; 
+                return register;
 
             }
             else if (expr is LogicAndExpression)
@@ -737,10 +786,10 @@ namespace DemoNavi.Recompilers.x86
                 var add = expr as BitwiseAndExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
                 var register = registerToUse;
-                programBuilder.AppendFormat("cmp {0}, 0", leftRegister);
+                programBuilder.AppendFormat("\t cmp {0}, 0", leftRegister);
                 programBuilder.AppendFormat("\t\t# Compara {0} con 0", leftRegister);
                 programBuilder.AppendLine();
-                programBuilder.AppendFormat("\t\t# je .L{0}", labelCount);
+                programBuilder.AppendFormat("\t je .L{0}", labelCount);
                 programBuilder.AppendLine();
                 registerFile.FreeRegister(leftRegister);
 
@@ -749,25 +798,25 @@ namespace DemoNavi.Recompilers.x86
 
                 if (register != rightRegister)
                 {
-                    programBuilder.AppendFormat(" cmp {0}, 0", rightRegister);
+                    programBuilder.AppendFormat("\t cmp {0}, 0", rightRegister);
                     programBuilder.AppendFormat("\t\t# Compara {0} con 0", rightRegister);
                     programBuilder.AppendLine();
-                    programBuilder.AppendFormat("\t\t# je .L{0}", labelCount);
+                    programBuilder.AppendFormat("\t je .L{0}", labelCount);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
 
                 }
-                return register; 
-               
+                return register;
+
             #endregion
 
-            #region ASSIGN_EXPRESSIONS
+                #region ASSIGN_EXPRESSIONS
             }
             else if (expr is AdditionAssignmentExpression)
             {
                 var add = expr as AdditionAssignmentExpression;
                 var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
-                programBuilder.AppendFormat("add {0}, {1}", leftRegister, add.Left);
+                programBuilder.AppendFormat("\t add {0}, {1}", leftRegister, add.Left);
                 programBuilder.AppendFormat("\t# {0}", expr.ToString());
                 programBuilder.AppendLine();
 
@@ -776,7 +825,7 @@ namespace DemoNavi.Recompilers.x86
             {
                 var sub = expr as SubtractionAsigExpression;
                 var leftRegister = WriteExpr(sub.Right, registerFile, programBuilder);
-                programBuilder.AppendFormat("sub {0}, {1}", leftRegister, sub.Left);
+                programBuilder.AppendFormat("\t sub {0}, {1}", leftRegister, sub.Left);
                 programBuilder.AppendFormat("\t# {0}", expr.ToString());
                 programBuilder.AppendLine();
 
@@ -785,7 +834,7 @@ namespace DemoNavi.Recompilers.x86
             {
                 var sub = expr as MultiplicationAsigExpression;
                 var leftRegister = WriteExpr(sub.Right, registerFile, programBuilder);
-                programBuilder.AppendFormat("mul {0}, {1}", leftRegister, sub.Left);
+                programBuilder.AppendFormat("\t mul {0}, {1}", leftRegister, sub.Left);
                 programBuilder.AppendFormat("\t# {0}", expr.ToString());
                 programBuilder.AppendLine();
 
@@ -794,7 +843,7 @@ namespace DemoNavi.Recompilers.x86
             {
                 var sub = expr as DivisionAsigExpression;
                 var leftRegister = WriteExpr(sub.Right, registerFile, programBuilder);
-                programBuilder.AppendFormat("div {0}, {1}", leftRegister, sub.Left);
+                programBuilder.AppendFormat("\t div {0}, {1}", leftRegister, sub.Left);
                 programBuilder.AppendFormat("\t# {0}", expr.ToString());
                 programBuilder.AppendLine();
             }
@@ -834,9 +883,10 @@ namespace DemoNavi.Recompilers.x86
                 {
                     if (inStack == false)
                     {
-                        programBuilder.AppendFormat("mov {0}, {1}", assignRegister, assign.Left.ToString());
+                        programBuilder.AppendFormat("\t mov {0}, {1}", assignRegister, assign.Left.ToString());
+                        programBuilder.AppendLine();
                     }
-                    programBuilder.AppendLine();
+
                     inStack = false;
                     return assignRegister;
                 }
@@ -848,7 +898,7 @@ namespace DemoNavi.Recompilers.x86
             {
                 var postIncrement = expr as PostIncrementExpression;
                 var register = registerFile.RegisterPosition(postIncrement.Expression.ToString());
-                programBuilder.AppendFormat("add DWORD PTR [epb-{0}], 1", register);
+                programBuilder.AppendFormat("\t add DWORD PTR [epb-{0}], 1", register);
                 programBuilder.AppendFormat("\t# {0}", expr.ToString());
                 programBuilder.AppendLine();
 
@@ -856,11 +906,11 @@ namespace DemoNavi.Recompilers.x86
             }
             else if (expr is PreIncrementExpression)
             {
-               
+
             }
             else if (expr is PostDecrementExpression)
             {
-               
+
             }
             else if (expr is PreDecrementExpression)
             {
@@ -877,7 +927,7 @@ namespace DemoNavi.Recompilers.x86
             #region ARRAY_EXPRESSION
             else if (expr is PointerArrayAccessExpr)
             {
-               
+
             }
             #endregion
 
@@ -936,7 +986,7 @@ namespace DemoNavi.Recompilers.x86
         private void WriteGlobalVariables(StringBuilder programBuilder, string functionName)
         {
             programBuilder.AppendLine(".globl main");
-            programBuilder.AppendFormat("\n.type {0}, @function", functionName);
+            programBuilder.AppendFormat("\t.type {0}, @function", functionName);
             programBuilder.AppendLine();
         }
 
