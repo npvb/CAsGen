@@ -21,6 +21,7 @@ namespace DemoNavi.Recompilers.x86
         bool param = false;
         bool inStack = false;
         bool inCycle = false;
+        bool recursive = false;
         string savedValue = null;
         string mainName = null;
 
@@ -91,11 +92,29 @@ namespace DemoNavi.Recompilers.x86
 
         private void WriteFunctionCallExp(FunctionCallExpression functioncall, StringBuilder programBuilder)
         {
-            for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
+            foreach (var id in registerFile.listofFunctions)
             {
-                WriteExpr(functioncall.Parameters.Exprlist[i], registerFile, programBuilder);
+                if (id == functioncall.Id)
+                {
+                    recursive = true; break;
+                }
             }
-            programBuilder.AppendLine("\t pop ebp");
+            if (recursive == false)
+            {
+
+                for (int i = 0; i < functioncall.Parameters.Exprlist.Count; i++)
+                {
+                    WriteExpr(functioncall.Parameters.Exprlist[i], registerFile, programBuilder);
+                }
+                programBuilder.AppendLine("\t pop ebp");
+            }
+            else 
+            {
+                foreach (var param in functioncall.Parameters.Exprlist)
+                {
+                    WriteExpr(param, registerFile, programBuilder);
+                }
+            }
         }
 
         #endregion
@@ -337,7 +356,7 @@ namespace DemoNavi.Recompilers.x86
                         }
                 }
 
-                if (indexFound == true && inStack == true)
+                if (indexFound == true && inCycle == true)//inStack == true)
                 {
                     programBuilder.AppendFormat("\t mov DWORD PTR [ebp-{0}], {1}", register, expr.ToString());
                     programBuilder.AppendFormat("\t# Mueve {0} a la posición en la pila {1}", expr.ToString(), register);
@@ -482,6 +501,64 @@ namespace DemoNavi.Recompilers.x86
                 {
                     programBuilder.AppendFormat("\t div {0}, {1}", register, rightRegister);
                     programBuilder.AppendFormat("\t\t# {0} / {1}", register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+
+                }
+                return register;
+            }
+            else if (expr is ModExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                }
+                var add = expr as ModExpression;
+                var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("\t mov {0}, {1}", register, leftRegister);
+                programBuilder.AppendLine();
+                programBuilder.AppendFormat("\t sar {0}, 31", leftRegister);
+                programBuilder.AppendLine();
+               // register = leftRegister;
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
+
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("\t idiv {0}", rightRegister);
+                    programBuilder.AppendFormat("\t\t# {0} % {1}", register, rightRegister);
+                    programBuilder.AppendLine();
+                    registerFile.FreeRegister(rightRegister);
+
+                }
+                return register;
+            }
+            else if (expr is ModExpression)
+            {
+                if (string.IsNullOrEmpty(registerToUse))
+                {
+                    registerToUse = registerFile.FirstAvailableRegister();
+                }
+                var add = expr as ModExpression;
+                var leftRegister = WriteExpr(add.Right, registerFile, programBuilder);
+                var register = registerToUse;
+                programBuilder.AppendFormat("\t div {0}, {1}", register, leftRegister);
+                programBuilder.AppendFormat("\t\t# {0} % {1}", register, leftRegister);
+                programBuilder.AppendLine();
+                registerFile.FreeRegister(leftRegister);
+
+                var rightRegister = WriteExpr(add.Left, registerFile, programBuilder, register);
+
+
+                if (register != rightRegister)
+                {
+                    programBuilder.AppendFormat("\t move {0}, {1}", register, rightRegister);
+                    programBuilder.AppendFormat("\t\t# {0} / {1}", register, rightRegister);
+                    programBuilder.AppendLine();
+                    programBuilder.AppendFormat("\t mfhi {0}", rightRegister);
+                    programBuilder.AppendFormat("\t\t# Pasa el valor {0} para guardar el MOD", rightRegister);
                     programBuilder.AppendLine();
                     registerFile.FreeRegister(rightRegister);
 
@@ -810,7 +887,7 @@ namespace DemoNavi.Recompilers.x86
 
             #endregion
 
-                #region ASSIGN_EXPRESSIONS
+            #region ASSIGN_EXPRESSIONS
             }
             else if (expr is AdditionAssignmentExpression)
             {

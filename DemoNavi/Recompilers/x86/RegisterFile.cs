@@ -18,6 +18,7 @@ namespace DemoNavi.Recompilers.x86
         public Dictionary<String, Stack> stack = new Dictionary<string, Stack>();
         Dictionary<String, Boolean> registers = new Dictionary<string, bool>();
         public Dictionary<String, Boolean> savedTemporals = new Dictionary<string, bool>();
+        public List<String> listofFunctions = new List<string>();
         
         public RegisterFile()
         {

@@ -95,11 +95,19 @@ namespace DemoNavi.ConsoleHost
 
         static void Loop()
         {
-            while (true)
+            try
             {
-               Print(Eval(Read()));
+                while (true)
+                {
+                    Print(Eval(Read()));
 
-             }
+                }
+            }
+            catch (Exception e) 
+            {
+                Console.WriteLine(e.ToString());
+                Loop();
+            }
         }
 
         #endregion 

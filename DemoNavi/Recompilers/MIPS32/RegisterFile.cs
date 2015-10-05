@@ -22,6 +22,7 @@ namespace DemoNavi.Recompilers.MIPS32
         public Dictionary<String, String> savedTemporals = new Dictionary<string, string>();
         public Dictionary<String, Stack> savedValuesList = new Dictionary<string, Stack>();
         public Dictionary<String, String> savedArguments = new Dictionary<string, string>();
+        public List<String> listofFunctions = new List<string>();
 
         
         #region Registers
