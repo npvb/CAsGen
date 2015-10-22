@@ -25,6 +25,7 @@ namespace DemoNavi.ConsoleHost
 
         static string Read()
         {
+           toMips = toX86 = false;
            Console.Write(">>   ");
            string command = Console.ReadLine();
 

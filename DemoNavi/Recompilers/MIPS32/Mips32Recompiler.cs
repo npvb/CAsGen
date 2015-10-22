@@ -1144,21 +1144,46 @@ namespace DemoNavi.Recompilers.MIPS32
 
         private void WritetoLog(StringBuilder headerBuilder, StringBuilder programBuilder)
         {
-            string path = AppDomain.CurrentDomain.BaseDirectory;
-            string pathNfile = String.Empty;
-            pathNfile = path + "\\Ejemplo_Mips.asm";
+            CreateResultFolder("Ejemplos CasGen");
+            
+            int count = 1;
+            string pathNfile = "Ejemplo_Mips.asm";
+            string fullPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\Ejemplos CasGen\" + pathNfile;
+            string fileNameOnly = Path.GetFileNameWithoutExtension(fullPath);
+            string extension = Path.GetExtension(fullPath);
+            string path = Path.GetDirectoryName(fullPath);
+            string newFullPath = fullPath;
+
+            while (File.Exists(newFullPath))
+            {
+                string tempFileName = string.Format("{0}({1})", fileNameOnly, count++);
+                pathNfile = tempFileName;
+                newFullPath = Path.Combine(path, tempFileName + extension);
+            }
 
             DirectoryInfo info = new DirectoryInfo(path);
             if (!info.Exists)
                 info.Create();
 
-            FileStream archivoFtp = new FileStream(pathNfile, FileMode.Append);
+            FileStream archivoFtp = new FileStream(newFullPath, FileMode.Append);
             StreamWriter escritor = new StreamWriter(archivoFtp, Encoding.Default);
 
             escritor.WriteLine(headerBuilder);
             escritor.WriteLine(programBuilder);
             escritor.Close();
         }
+
+        public void CreateResultFolder(string name)
+        {
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+            if (!(System.IO.Directory.Exists(desktopPath + @"\" + name)))
+            {
+                System.IO.Directory.CreateDirectory(desktopPath + @"\" + name);
+            }
+
+        }
+
         #endregion
     }
 }
